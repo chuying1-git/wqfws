@@ -1,0 +1,2181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#060402" />
+<meta name="description" content="WQFWS // 阈界回访 · 第二趟" />
+<meta name="robots" content="noindex" />
+<title>WQFWS // 阈界回访 · 第二趟</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23060402'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='%23ffd27d' font-family='monospace'%3E2_%3C/text%3E%3C/svg%3E" />
+
+<!--
+  第二趟 · 阈界回访
+  ---------------------------------------------------------------
+  这是 wqfws ARG 的隐藏入口，和 index.html 同源，因此共用 localStorage：
+    · 读 wqfws-v3 的 .final 判断主线是否走完（门槛）
+    · 自己写 wqfws-p2
+  设定全部照 The Backrooms 中文维基「Level 0 - 阈界」：
+    https://brcn.backroomswiki.cn/latest:level-0
+  这一层没有已确认的实体（生存难度 1：安全 / 稳定 / 未确认实体）。
+-->
+<style>
+  :root {
+    /* 第二趟用琥珀色 —— Level 0 的「病态的黄色」 */
+    --g: #ffd27d;
+    --g-bright: #fff3d6;
+    --g-dim: rgba(255, 210, 125, 0.58);
+    --g-faint: rgba(255, 210, 125, 0.16);
+    --bg: #060402;
+    --red: #ff7b7b;
+    --cyan: #6de0ff;
+    --mono: "Cascadia Mono", "Consolas", "SFMono-Regular", "Menlo", "Courier New", monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background:
+      radial-gradient(900px 600px at 50% -10%, rgba(255, 210, 125, 0.10), transparent 62%),
+      radial-gradient(700px 520px at 50% 112%, rgba(255, 210, 125, 0.05), transparent 60%),
+      var(--bg);
+    color: var(--g);
+    font-family: var(--mono);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: rgba(255, 210, 125, 0.26); color: #fff8e8; }
+
+  .screen {
+    position: relative;
+    width: min(1080px, 100%);
+    height: min(880px, calc(100dvh - 48px));
+    border: 1px solid rgba(255, 210, 125, 0.22);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(255, 210, 125, 0.035), rgba(6, 4, 2, 0.92));
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(255, 210, 125, 0.05) inset;
+    overflow: hidden;
+    animation: screenIn 0.7s ease;
+  }
+  @keyframes screenIn { from { opacity: 0; transform: scale(0.985); } }
+
+  .scanlines {
+    position: absolute; inset: 0; z-index: 5; pointer-events: none;
+    background: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,0.16) 2px 4px);
+    mix-blend-mode: multiply;
+  }
+  .sweep {
+    position: absolute; left: 0; right: 0; height: 140px; z-index: 6; pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgba(255,210,125,0.05), transparent);
+    animation: sweep 7s linear infinite;
+  }
+  @keyframes sweep { 0% { top: -140px; } 100% { top: 100%; } }
+
+  .content {
+    position: relative; z-index: 2;
+    height: 100%; overflow-y: auto;
+    padding: 24px 26px 30px;
+  }
+  .content::-webkit-scrollbar { width: 8px; }
+  .content::-webkit-scrollbar-thumb { background: rgba(255,210,125,0.2); border-radius: 4px; }
+
+  .topline {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 10px; letter-spacing: 0.16em;
+    color: var(--g-dim); text-transform: uppercase;
+    padding-bottom: 12px; border-bottom: 1px solid var(--g-faint);
+  }
+  .topline .grow { flex: 1; }
+  .topline .status { display: flex; align-items: center; gap: 7px; }
+  .topline .status i {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--g); box-shadow: 0 0 8px var(--g);
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 50% { opacity: 0.32; } }
+
+  .hero { margin: 26px 0 4px; }
+  .hero-title {
+    font-size: 40px; letter-spacing: 0.36em; text-indent: 0.36em;
+    color: var(--g-bright);
+    text-shadow: 0 0 34px rgba(255, 210, 125, 0.42);
+  }
+  .hero-sub {
+    margin-top: 9px;
+    font-size: 11px; letter-spacing: 0.3em;
+    color: rgba(255, 210, 125, 0.42);
+  }
+  .hero-note {
+    margin: 18px 0 0; max-width: 620px;
+    font-size: 12.5px; line-height: 1.9; color: var(--g-dim);
+  }
+  .hero-note b { color: var(--g-bright); }
+
+  .p2bar {
+    display: flex; align-items: center; gap: 12px;
+    margin: 24px 0 18px;
+    font-size: 10.5px; letter-spacing: 0.14em; color: var(--g-dim);
+  }
+  .p2segs { display: flex; gap: 6px; flex: 1; }
+  .seg {
+    flex: 1; height: 5px; border-radius: 3px;
+    background: rgba(255, 210, 125, 0.1);
+    border: 1px solid var(--g-faint);
+    transition: all 0.3s;
+  }
+  .seg.done { background: var(--g); border-color: var(--g); box-shadow: 0 0 12px rgba(255, 210, 125, 0.55); }
+
+  .mods { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 11px; }
+
+  .mod {
+    position: relative; text-align: left;
+    padding: 14px 15px 15px;
+    border: 1px dashed rgba(255, 210, 125, 0.24);
+    border-radius: 11px;
+    background: rgba(255, 210, 125, 0.025);
+    color: var(--g-dim);
+    font-family: var(--mono); font-size: 12px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .mod:disabled { opacity: 0.34; cursor: not-allowed; }
+  .mod:not(:disabled):hover {
+    border-color: rgba(255, 210, 125, 0.55);
+    background: rgba(255, 210, 125, 0.075);
+    transform: translateY(-2px);
+  }
+  .mod.active { border-style: solid; border-color: var(--g); box-shadow: 0 0 22px rgba(255, 210, 125, 0.18); }
+  .mod.done { border-style: solid; border-color: rgba(255, 210, 125, 0.5); opacity: 0.72; }
+  .mod-idx { font-size: 9.5px; letter-spacing: 0.2em; color: rgba(255, 210, 125, 0.4); }
+  .mod-name { margin: 7px 0 5px; font-size: 14px; color: var(--g-bright); letter-spacing: 0.06em; }
+  .mod-desc { font-size: 11px; line-height: 1.6; color: rgba(255, 210, 125, 0.45); }
+  .mod-tick {
+    position: absolute; top: 12px; right: 13px;
+    font-size: 12px; color: var(--g); opacity: 0; transition: opacity 0.25s;
+  }
+  .mod.done .mod-tick { opacity: 1; }
+
+  .log {
+    margin-top: 22px;
+    border-top: 1px solid var(--g-faint);
+    padding-top: 14px;
+    font-size: 11.5px; line-height: 1.95;
+    color: var(--g-dim);
+    min-height: 96px; max-height: 210px; overflow-y: auto;
+    white-space: pre-wrap;
+  }
+  .log::-webkit-scrollbar { width: 6px; }
+  .log::-webkit-scrollbar-thumb { background: rgba(255,210,125,0.18); border-radius: 3px; }
+  .log .ok { color: var(--g-bright); }
+  .log .warn { color: var(--g); }
+  .log .er { color: var(--red); }
+  .log .dim { color: rgba(255, 210, 125, 0.34); }
+
+  .footer {
+    margin-top: 20px; padding-top: 14px;
+    border-top: 1px solid var(--g-faint);
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: center;
+    font-size: 10.5px; letter-spacing: 0.1em;
+  }
+  .footer a { color: rgba(255, 210, 125, 0.5); text-decoration: none; border-bottom: 1px dotted currentColor; }
+  .footer a:hover { color: var(--g-bright); }
+
+  /* ============ 开机自检 ============ */
+  #boot {
+    position: absolute; inset: 0; z-index: 8;
+    padding: 26px 28px;
+    background: var(--bg); color: var(--g);
+    font-size: 13px; line-height: 1.75;
+    white-space: pre-wrap; overflow: hidden;
+    transition: opacity 0.45s ease;
+  }
+  #boot.done { opacity: 0; }
+  .boot-cursor {
+    display: inline-block; width: 9px; height: 15px;
+    background: var(--g); vertical-align: -2px;
+    animation: cur 0.9s steps(1) infinite;
+  }
+  @keyframes cur { 50% { opacity: 0; } }
+
+  /* ============ 门槛屏 ============ */
+  .lock {
+    position: fixed; inset: 0; z-index: 300;
+    display: none; place-items: center; padding: 20px;
+    background: rgba(6, 4, 2, 0.93);
+    backdrop-filter: blur(6px);
+  }
+  .lock.show { display: grid; }
+  .lock-card {
+    width: min(520px, 100%);
+    border: 1px solid rgba(255, 210, 125, 0.28);
+    border-radius: 14px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(255, 210, 125, 0.05), rgba(6, 4, 2, 0.97));
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+  }
+  .lock-hd {
+    padding: 13px 18px; border-bottom: 1px solid var(--g-faint);
+    background: rgba(255, 210, 125, 0.05);
+    font-size: 12px; letter-spacing: 0.12em; color: var(--red);
+  }
+  .lock-bd { padding: 20px 20px 22px; font-size: 12.5px; line-height: 1.95; color: var(--g-dim); }
+  .lock-bd p { margin: 0 0 12px; }
+  .lock-bd b { color: var(--g-bright); }
+  .lock-prog {
+    margin: 16px 0 18px; padding: 12px 14px;
+    border: 1px solid var(--g-faint); border-radius: 9px;
+    background: rgba(0,0,0,0.4);
+    font-size: 11.5px; line-height: 1.8;
+  }
+  .lock-prog .row { display: flex; justify-content: space-between; gap: 12px; }
+  .lock-prog .row span:last-child { color: var(--g-bright); }
+
+  /* ============ 关卡面板 ============ */
+  .stage {
+    position: fixed; inset: 0; z-index: 90;
+    display: none; place-items: center; padding: 20px;
+    background: rgba(6, 4, 2, 0.9);
+    backdrop-filter: blur(7px);
+  }
+  .stage.on { display: grid; animation: stageIn 0.28s ease; }
+  @keyframes stageIn { from { opacity: 0; } }
+
+  .stage-card {
+    width: min(760px, 100%);
+    max-height: calc(100vh - 40px);
+    max-height: calc(100dvh - 40px);
+    display: flex; flex-direction: column;
+    border: 1px solid rgba(255, 210, 125, 0.3);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255, 210, 125, 0.045), rgba(6, 4, 2, 0.97));
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.75);
+    overflow: hidden;
+    animation: cardIn 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+  }
+  @keyframes cardIn { from { transform: translateY(16px) scale(0.98); } }
+
+  .stage-hd {
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--g-faint);
+    background: rgba(255, 210, 125, 0.045);
+    font-size: 12px; letter-spacing: 0.1em; color: var(--g-dim);
+    flex-shrink: 0;
+  }
+  .stage-hd .grow { flex: 1; }
+  .stage-hd .prog { color: var(--g); letter-spacing: 0.06em; }
+  .stage-x {
+    width: 26px; height: 26px;
+    border: 1px solid var(--g-faint); border-radius: 6px;
+    background: transparent; color: var(--g-dim);
+    font-family: var(--mono); font-size: 13px; cursor: pointer;
+    transition: all 0.18s;
+  }
+  .stage-x:hover { border-color: rgba(255, 123, 123, 0.5); color: var(--red); }
+
+  .stage-bd { padding: 20px 22px 22px; overflow-y: auto; }
+  .stage-note { font-size: 12.5px; line-height: 1.85; color: var(--g-dim); margin: 0 0 16px; }
+  .stage-note b { color: var(--g-bright); }
+
+  .stage-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+
+  .btn {
+    padding: 9px 18px;
+    border: 1px solid rgba(255, 210, 125, 0.42); border-radius: 8px;
+    background: rgba(255, 210, 125, 0.09);
+    color: var(--g-bright);
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em;
+    cursor: pointer; transition: all 0.18s;
+  }
+  .btn:hover:not(:disabled) { background: rgba(255, 210, 125, 0.2); box-shadow: 0 0 18px rgba(255, 210, 125, 0.22); }
+  .btn:disabled { opacity: 0.34; cursor: not-allowed; }
+  .btn.ghost { background: transparent; color: var(--g-dim); }
+
+  .stage-out {
+    margin-top: 15px; padding: 12px 14px;
+    border: 1px solid var(--g-faint); border-radius: 9px;
+    background: rgba(0, 0, 0, 0.4);
+    font-size: 11.5px; line-height: 1.8; color: var(--g-dim);
+    white-space: pre-wrap; min-height: 46px;
+  }
+  .stage-out .ok2 { color: var(--g-bright); }
+  .stage-out .er { color: var(--red); }
+
+  .stage-done {
+    display: none; margin-top: 14px; padding: 13px 15px;
+    border: 1px solid rgba(255, 210, 125, 0.4); border-radius: 9px;
+    background: rgba(255, 210, 125, 0.07);
+    font-size: 12px; line-height: 1.9; color: var(--g-bright);
+  }
+  .stage-done.on { display: block; animation: stageIn 0.4s ease; }
+  .stage-done b { color: #fff; }
+
+  .shake { animation: shake 0.4s ease; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-7px); }
+    40% { transform: translateX(7px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  /* ============ P2-01 孤立效应 ============ */
+  .iso-wrap { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+  .iso-col { text-align: center; }
+  .iso-cap { font-size: 10px; letter-spacing: 0.16em; margin-bottom: 8px; color: var(--g-dim); }
+  .iso-grid {
+    display: grid; gap: 3px; justify-content: center;
+    grid-template-columns: repeat(7, 34px);
+    padding: 10px; border: 1px solid var(--g-faint); border-radius: 9px;
+    background: #0a0703;
+  }
+  .ic {
+    width: 34px; height: 34px;
+    border: 1px solid rgba(255, 210, 125, 0.08); border-radius: 4px;
+    background: transparent; padding: 0;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .ic:hover { border-color: rgba(255, 210, 125, 0.5); }
+  .ic.you { background: rgba(109, 255, 158, 0.24); border-color: rgba(109, 255, 158, 0.5); }
+  .ic.other { background: rgba(255, 210, 125, 0.24); border-color: rgba(255, 210, 125, 0.5); }
+  .ic.both {
+    background: rgba(109, 224, 255, 0.34); border-color: var(--cyan);
+    box-shadow: 0 0 14px rgba(109, 224, 255, 0.5);
+  }
+  .ic.wrong { background: rgba(255, 123, 123, 0.3); border-color: var(--red); }
+  .iso-legend {
+    display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+    margin-top: 12px; font-size: 10px; letter-spacing: 0.08em; color: var(--g-dim);
+  }
+  .iso-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .iso-legend i.sw-you { background: rgba(109, 255, 158, 0.5); }
+  .iso-legend i.sw-other { background: rgba(255, 210, 125, 0.5); }
+
+  /* ============ P2-02 噪音 ============ */
+  .waves { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+  .wave {
+    border: 1px solid var(--g-faint); border-radius: 10px;
+    background: rgba(255, 210, 125, 0.025);
+    padding: 11px 13px 12px; cursor: pointer; transition: all 0.18s;
+  }
+  .wave:hover { border-color: rgba(255, 210, 125, 0.5); }
+  .wave.sel { border-color: var(--g); background: rgba(255, 210, 125, 0.09); box-shadow: 0 0 20px rgba(255, 210, 125, 0.16); }
+  .wave.wrong { border-color: var(--red); background: rgba(255, 123, 123, 0.09); }
+  .wv-top { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
+  .wv-name { font-size: 10px; letter-spacing: 0.18em; color: rgba(255, 210, 125, 0.45); }
+  .wv-title { font-size: 12px; color: var(--g-bright); }
+  .wv-svg { display: block; width: 100%; height: 42px; margin: 2px 0 7px; }
+  .wv-svg polyline { fill: none; stroke: rgba(255, 210, 125, 0.72); stroke-width: 1.2; }
+  .wave.sel .wv-svg polyline { stroke: var(--g-bright); }
+  .wv-desc { font-size: 11px; line-height: 1.65; color: rgba(255, 210, 125, 0.45); }
+  .wv-play {
+    margin-top: 9px; padding: 4px 11px;
+    border: 1px solid var(--g-faint); border-radius: 6px;
+    background: transparent; color: var(--g-dim);
+    font-family: var(--mono); font-size: 10.5px; cursor: pointer;
+  }
+  .wv-play:hover { border-color: var(--g); color: var(--g-bright); }
+
+  /* ============ P2-03 熄灯区 ============ */
+  .lz-grid {
+    display: grid; gap: 5px; justify-content: center;
+    grid-template-columns: repeat(5, 54px);
+    padding: 12px; border: 1px solid var(--g-faint); border-radius: 10px;
+    background: #0a0703;
+    transition: background 0.3s;
+  }
+  .lz-grid.dark { background: #000; border-color: rgba(255, 210, 125, 0.07); }
+  .lz {
+    width: 54px; height: 54px;
+    border: 1px solid rgba(255, 210, 125, 0.1); border-radius: 6px;
+    background: transparent; color: var(--g-bright);
+    font-family: var(--mono); font-size: 17px;
+    cursor: pointer; transition: all 0.15s;
+    display: grid; place-items: center;
+  }
+  .lz-grid.dark .lz { border-color: rgba(255, 210, 125, 0.05); color: transparent; }
+  .lz-grid.dark .lz:hover { border-color: rgba(255, 210, 125, 0.35); }
+  .lz.lit { background: rgba(255, 210, 125, 0.3); border-color: var(--g); box-shadow: 0 0 16px rgba(255, 210, 125, 0.4); }
+  .lz.hit { background: rgba(109, 255, 158, 0.26); border-color: rgba(109, 255, 158, 0.7); }
+  .lz-grid.dark .lz.hit { color: var(--g-bright); }
+  .lz.miss { background: rgba(255, 123, 123, 0.3); border-color: var(--red); }
+
+  /* ============ P2-04 红室 ============ */
+  .rooms { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+  .room {
+    text-align: left;
+    padding: 12px 13px;
+    border: 1px solid var(--g-faint); border-radius: 10px;
+    background: rgba(255, 210, 125, 0.025);
+    color: var(--g-dim);
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.7;
+    cursor: pointer; transition: all 0.18s;
+  }
+  .room:hover { border-color: rgba(255, 210, 125, 0.5); }
+  .room.sel { border-color: var(--red); background: rgba(255, 123, 123, 0.1); color: var(--g-bright); }
+  .room.right { border-color: var(--red); background: rgba(255, 123, 123, 0.14); }
+  .room.wrongpick { border-color: var(--cyan); }
+  .room-id { font-size: 9.5px; letter-spacing: 0.2em; color: rgba(255, 210, 125, 0.4); display: block; margin-bottom: 6px; }
+  .room.sel .room-id { color: var(--red); }
+
+  /* ============ P2-05 地毯 ============ */
+  .bottles { display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr)); gap: 10px; }
+  .btl {
+    text-align: left; padding: 12px 13px;
+    border: 1px solid var(--g-faint); border-radius: 10px;
+    background: rgba(255, 210, 125, 0.025);
+    color: var(--g-dim);
+    font-family: var(--mono); font-size: 11.5px; line-height: 1.7;
+    cursor: pointer; transition: all 0.18s;
+  }
+  .btl:hover { border-color: rgba(255, 210, 125, 0.5); }
+  .btl.detected { border-color: rgba(255, 210, 125, 0.36); background: rgba(255, 210, 125, 0.05); }
+  .btl-tag { display: block; font-size: 9.5px; letter-spacing: 0.2em; color: rgba(255, 210, 125, 0.4); margin-bottom: 5px; }
+  .btl-name { display: block; font-size: 13px; color: var(--g-bright); margin-bottom: 6px; }
+  .btl-read { display: block; min-height: 2.7em; color: rgba(255, 210, 125, 0.45); }
+  .btl.detected .btl-read { color: var(--g-dim); }
+  .btl-pol { display: block; margin-top: 8px; font-size: 11px; color: rgba(255, 210, 125, 0.3); }
+  .btl.detected .btl-pol { color: var(--red); }
+
+  .cp-choice {
+    margin-top: 16px; padding: 15px;
+    border: 1px dashed rgba(255, 210, 125, 0.32); border-radius: 10px;
+    background: rgba(0, 0, 0, 0.35);
+  }
+  .cp-choice.bad { border-color: rgba(255, 123, 123, 0.55); }
+  .cp-choice.good { border-color: rgba(109, 255, 158, 0.5); }
+  .cp-q { font-size: 12.5px; line-height: 1.8; color: var(--g-bright); margin-bottom: 12px; }
+  .cp-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cp-row .btn { padding: 7px 14px; font-size: 11.5px; }
+  .cp-row .btn.drink { border-color: rgba(255, 123, 123, 0.4); }
+  .cp-row .btn.drink:hover { background: rgba(255, 123, 123, 0.16); box-shadow: 0 0 18px rgba(255, 123, 123, 0.2); }
+
+  /* ============ P2-06 深坑 ============ */
+  .pit-grid {
+    display: grid; gap: 4px; justify-content: center;
+    grid-template-columns: repeat(6, 52px);
+    padding: 12px; border: 1px solid var(--g-faint); border-radius: 10px;
+    background: #0a0703;
+  }
+  .pc {
+    width: 52px; height: 52px;
+    border: 1px solid rgba(255, 210, 125, 0.08); border-radius: 6px;
+    background: transparent; color: rgba(255, 210, 125, 0.22);
+    font-family: var(--mono); font-size: 15px;
+    cursor: pointer; transition: all 0.15s;
+    display: grid; place-items: center;
+  }
+  .pc:hover { border-color: rgba(255, 210, 125, 0.4); }
+  .pc.solid { background: rgba(255, 210, 125, 0.12); border-color: rgba(255, 210, 125, 0.32); color: var(--g-dim); }
+  .pc.pit { background: rgba(0, 0, 0, 0.85); border-color: rgba(255, 123, 123, 0.36); color: var(--red); }
+  .pc.here {
+    background: rgba(109, 255, 158, 0.24); border-color: rgba(109, 255, 158, 0.72);
+    color: var(--g-bright); box-shadow: 0 0 14px rgba(109, 255, 158, 0.42);
+  }
+  .pc.goal { border-color: var(--cyan); color: var(--cyan); }
+  .pc.goal.here { background: rgba(109, 224, 255, 0.28); box-shadow: 0 0 18px rgba(109, 224, 255, 0.5); }
+
+  .pit-legend {
+    display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;
+    margin-top: 12px; font-size: 10px; letter-spacing: 0.06em; color: var(--g-dim);
+  }
+  .pit-legend b { color: var(--g-bright); }
+
+  /* ============ P2-06 闪烁的墙壁 ============ */
+  .walls { display: flex; gap: 11px; flex-wrap: wrap; justify-content: center; }
+  .wl {
+    position: relative; width: 78px; height: 112px; padding: 0;
+    border: 1px solid rgba(255, 210, 125, 0.28); border-radius: 6px;
+    background: linear-gradient(180deg, rgba(255, 210, 125, 0.15), rgba(255, 210, 125, 0.03));
+    color: rgba(255, 210, 125, 0.4);
+    font-family: var(--mono); font-size: 10px;
+    cursor: pointer; overflow: hidden;
+    display: grid; place-items: center;
+    animation: wallBreath 4.2s ease-in-out infinite;
+  }
+  .wl:nth-child(2n) { animation-delay: -1.3s; }
+  .wl:nth-child(3n) { animation-delay: -2.6s; }
+  @keyframes wallBreath {
+    50% { background: linear-gradient(180deg, rgba(255, 210, 125, 0.26), rgba(255, 210, 125, 0.06)); }
+  }
+  .wl.flick {
+    border-color: rgba(255, 235, 190, 0.7);
+    animation: wallFlick 1.15s steps(1) infinite;
+  }
+  @keyframes wallFlick {
+    0%, 8%    { background: linear-gradient(180deg, rgba(255, 240, 205, 0.78), rgba(255, 210, 125, 0.3)); }
+    9%, 22%   { background: linear-gradient(180deg, rgba(255, 210, 125, 0.05), rgba(255, 210, 125, 0.01)); }
+    23%, 31%  { background: linear-gradient(180deg, rgba(255, 245, 215, 0.85), rgba(255, 210, 125, 0.34)); }
+    32%, 60%  { background: linear-gradient(180deg, rgba(255, 210, 125, 0.06), rgba(255, 210, 125, 0.01)); }
+    61%, 72%  { background: linear-gradient(180deg, rgba(255, 240, 205, 0.72), rgba(255, 210, 125, 0.26)); }
+    73%, 100% { background: linear-gradient(180deg, rgba(255, 210, 125, 0.05), rgba(255, 210, 125, 0.01)); }
+  }
+  .wl.wrong { border-color: var(--red); }
+  .wl.right {
+    border-color: var(--g-bright);
+    background: linear-gradient(180deg, rgba(255, 245, 215, 0.6), rgba(255, 210, 125, 0.24));
+    box-shadow: 0 0 34px rgba(255, 210, 125, 0.7);
+  }
+
+  /* ============ 结局 ============ */
+  .end-card { width: min(640px, 100%); }
+  .end-hd {
+    padding: 15px 20px; border-bottom: 1px solid var(--g-faint);
+    background: rgba(255, 210, 125, 0.05);
+    font-size: 12px; letter-spacing: 0.18em; color: var(--g-bright);
+  }
+  .end-bd { padding: 24px 24px 26px; font-size: 13px; line-height: 2.05; color: var(--g-dim); white-space: pre-wrap; }
+  .end-bd .plain { color: var(--g-dim); }
+  .end-bd .quote {
+    display: block; margin: 4px 0;
+    color: var(--g-bright); letter-spacing: 0.14em;
+    text-shadow: 0 0 22px rgba(255, 210, 125, 0.3);
+  }
+  .end-bd .sep { display: block; height: 16px; }
+  .end-link {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--g-faint);
+  }
+  .end-link a {
+    padding: 9px 16px; border: 1px solid rgba(255, 210, 125, 0.42); border-radius: 8px;
+    color: var(--g-bright); text-decoration: none; font-size: 12px;
+    background: rgba(255, 210, 125, 0.08); transition: all 0.18s;
+  }
+  .end-link a:hover { background: rgba(255, 210, 125, 0.2); }
+
+  /* ============ 响应式 ============ */
+  @media (max-width: 680px) {
+    body { padding: 10px; }
+    .screen { height: calc(100dvh - 20px); border-radius: 12px; }
+    .content { padding: 18px 15px 22px; }
+    #boot { padding: 18px 16px; font-size: 12px; }
+    .hero-title { font-size: 28px; letter-spacing: 0.26em; text-indent: 0.26em; }
+    .mods { grid-template-columns: 1fr 1fr; }
+    .stage-bd { padding: 16px 14px 18px; }
+    .iso-wrap { gap: 12px; }
+    .iso-grid { grid-template-columns: repeat(7, 26px); gap: 2px; padding: 7px; }
+    .ic { width: 26px; height: 26px; }
+    .lz-grid { grid-template-columns: repeat(5, 46px); gap: 4px; padding: 9px; }
+    .lz { width: 46px; height: 46px; font-size: 15px; }
+    .pit-grid { grid-template-columns: repeat(6, 40px); gap: 3px; padding: 8px; }
+    .pc { width: 40px; height: 40px; font-size: 14px; }
+    .wl { width: 58px; height: 86px; }
+    .bottles { grid-template-columns: 1fr 1fr; }
+    .btl { padding: 10px 11px; font-size: 11px; }
+    .end-bd { padding: 18px 16px 20px; font-size: 12px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .screen, .sweep, .topline .status i, .boot-cursor { animation: none; }
+    .stage.on, .stage-card, .stage-done.on { animation: none; }
+    /* 闪烁的墙壁：关掉动画后改用静态高亮 + 文字标记，否则这一关对晕动敏感的人无解 */
+    .wl, .wl.flick { animation: none; }
+    .wl.flick {
+      background: linear-gradient(180deg, rgba(255, 245, 215, 0.7), rgba(255, 210, 125, 0.28));
+    }
+    .wl.flick::after {
+      content: "闪"; position: absolute; bottom: 7px;
+      font-size: 10px; color: #fff8e8;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="screen">
+  <div class="scanlines"></div>
+  <div class="sweep"></div>
+
+  <div class="content" id="content">
+    <div class="topline">
+      <span class="status"><i></i> 阈界回访</span>
+      <span class="grow"></span>
+      <span id="clock">--:--:--</span>
+      <span>PHASE 2</span>
+    </div>
+
+    <div class="hero">
+      <div class="hero-title">二周目</div>
+      <div class="hero-sub">LEVEL 0 · 阈界回访档案</div>
+      <p class="hero-note">
+        第一趟你带走了那句话。可你离开的时候，回廊里少了一个人 ——<br />
+        <b>孤立效应</b>：即使两名流浪者并肩进入 Level 0，他们也永远无法找到彼此。
+        唯一的例外，是<b>某个狭小的房间</b>。<br />
+        这一趟你回来，就是为了找那扇门。
+      </p>
+    </div>
+
+    <div class="p2bar">
+      <span>进度</span>
+      <div class="p2segs" id="p2segs"></div>
+      <span id="p2prog">0 / 4</span>
+    </div>
+
+    <div class="mods" id="mods">
+      <button class="mod" type="button" data-stage="isolation">
+        <span class="mod-tick">✓</span>
+        <div class="mod-idx">P2-01</div>
+        <div class="mod-name">孤立效应</div>
+        <div class="mod-desc">两条足迹，只有一格重合 —— 找出那间房</div>
+      </button>
+      <button class="mod" type="button" data-stage="noise">
+        <span class="mod-tick">✓</span>
+        <div class="mod-idx">P2-02</div>
+        <div class="mod-name">噪音</div>
+        <div class="mod-desc">四段录音，挑出荧光灯的嗡鸣</div>
+      </button>
+      <button class="mod" type="button" data-stage="lights">
+        <span class="mod-tick">✓</span>
+        <div class="mod-idx">P2-03</div>
+        <div class="mod-name">熄灯区</div>
+        <div class="mod-desc">记下亮着的格子，然后摸黑走一遍</div>
+      </button>
+      <button class="mod" type="button" data-stage="redroom">
+        <span class="mod-tick">✓</span>
+        <div class="mod-idx">P2-04</div>
+        <div class="mod-name">红室</div>
+        <div class="mod-desc">八间房，挑出那两间进不得的</div>
+      </button>
+      <button class="mod" type="button" data-stage="carpet">
+        <span class="mod-tick">✓</span>
+        <div class="mod-idx">P2-05</div>
+        <div class="mod-name">地毯</div>
+        <div class="mod-desc">六份样本，测完再决定喝不喝</div>
+      </button>
+      <button class="mod" type="button" data-stage="exit">
+        <span class="mod-tick">✓</span>
+        <div class="mod-idx">P2-06</div>
+        <div class="mod-name">出口</div>
+        <div class="mod-desc">摸过深坑，再找到那面闪烁的墙</div>
+      </button>
+    </div>
+
+    <div class="log" id="log"></div>
+
+    <div class="footer">
+      <a href="./index.html">← 回到第一趟</a>
+      <button class="btn ghost" id="endAgain" type="button" style="display:none">◈ 再看隐藏结局</button>
+      <span class="grow"></span>
+      <span style="color:rgba(255,210,125,0.28)">设定依据 · The Backrooms 中文维基「Level 0 - 阈界」</span>
+    </div>
+  </div>
+
+  <div id="boot"><span id="bootText"></span><span class="boot-cursor"></span></div>
+</div>
+
+<!-- ============ 门槛屏 ============ -->
+<div class="lock" id="lock">
+  <div class="lock-card">
+    <div class="lock-hd">⚠ 档案未解锁 · ACCESS DENIED</div>
+    <div class="lock-bd">
+      <p>这条档案要<b>第一趟走完</b>才打得开。</p>
+      <p>它是留给已经出去过一次的人的 —— 你现在还没出去过。</p>
+      <div class="lock-prog">
+        <div class="row"><span>主线进度</span><span id="lockCount">—</span></div>
+        <div class="row"><span>十枚碎片</span><span id="lockFrags">—</span></div>
+        <div class="row"><span>最终广播</span><span id="lockFinal">—</span></div>
+      </div>
+      <p>回去把十一个模块做完，拿到「从后室归来，二周年快乐」再来。</p>
+      <div class="stage-actions">
+        <a class="btn" href="./index.html" style="text-decoration:none">← 回到第一趟</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P2-01 孤立效应 ============ -->
+<div class="stage" id="stage-isolation">
+  <div class="stage-card">
+    <div class="stage-hd">
+      <span>⧗ 孤立效应 · ISOLATION EFFECT</span>
+      <span class="grow"></span>
+      <span class="prog" id="isoProg">待解</span>
+      <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+    </div>
+    <div class="stage-bd">
+      <p class="stage-note">
+        左右是同一片回廊的两次记录：左边是<b>你</b>走过的格子，右边是<b>另一个流浪者</b>走过的格子。<br />
+        两边<b>只有一格重合</b> —— 那就是原文里那个唯一的例外，<b>狭小的房间</b>。在任意一边点出它。
+      </p>
+
+      <div class="iso-wrap">
+        <div class="iso-col">
+          <div class="iso-cap">A · 你的足迹</div>
+          <div class="iso-grid" id="isoGridA"></div>
+        </div>
+        <div class="iso-col">
+          <div class="iso-cap">B · 另一个流浪者</div>
+          <div class="iso-grid" id="isoGridB"></div>
+        </div>
+      </div>
+
+      <div class="iso-legend">
+        <span><i class="sw-you"></i> 你走过</span>
+        <span><i class="sw-other"></i> 对方走过</span>
+      </div>
+
+      <div class="stage-out" id="isoOut">等待辨认…</div>
+
+      <div class="stage-done" id="isoDone">
+        ✅ 两条足迹在 <b id="isoAns">—</b> 重合。你推开门，屋里有两张椅子。<br />
+        这就是孤立效应唯一的例外。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P2-02 噪音 ============ -->
+<div class="stage" id="stage-noise">
+  <div class="stage-card">
+    <div class="stage-hd">
+      <span>◍ 噪音 · NOISE</span>
+      <span class="grow"></span>
+      <span class="prog" id="noiseProg">0 / 1</span>
+      <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+    </div>
+    <div class="stage-bd">
+      <p class="stage-note">
+        Level 0 始终充斥着环境噪音，主要声源是<b>嗡嗡作响的灯具</b>，音量会随机剧烈波动。<br />
+        但流浪者还报告了其他声响：模糊的<b>低语</b>、<b>似曾相识的呼唤</b>，以及墙后<b>磨利尖爪般的刮擦声</b>。<br />
+        原文的建议是 —— <b>无视声音，持续前行</b>。所以你只需要认出哪一段是那盏灯。听完，点它，再确认。
+      </p>
+
+      <div class="waves" id="waves"></div>
+
+      <div class="stage-actions">
+        <button class="btn" id="noiseGo" type="button">确认：就是这一段</button>
+      </div>
+
+      <div class="stage-out" id="noiseOut">还没选。点一段波形选中它，可以按「试听」。</div>
+
+      <div class="stage-done" id="noiseDone">
+        ✅ 你认出了荧光灯的嗡鸣 —— 那个音量一直在波动、但从没换过调子的声音。<br />
+        剩下三段，你按原文说的，无视了它们。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P2-03 熄灯区 ============ -->
+<div class="stage" id="stage-lights">
+  <div class="stage-card">
+    <div class="stage-hd">
+      <span>▤ 熄灯区 · LIGHTS OUT</span>
+      <span class="grow"></span>
+      <span class="prog" id="lzProg">待解</span>
+      <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+    </div>
+    <div class="stage-bd">
+      <p class="stage-note">
+        <b>熄灯区</b>是 Level 0 里完全无照明的整片区域。一旦误入，很容易在黑暗中迷失方向，脱身极其困难。<br />
+        先看清亮着的是哪几格、按什么顺序亮，然后<b>关灯</b>，凭记忆把它们依次点一遍。
+      </p>
+
+      <div class="lz-grid" id="lzGrid"></div>
+
+      <div class="stage-actions">
+        <button class="btn" id="lzHide" type="button">记住了，关灯</button>
+        <button class="btn ghost" id="lzRetry" type="button">重新亮灯</button>
+      </div>
+
+      <div class="stage-out" id="lzOut">灯还亮着 —— 记住顺序。</div>
+
+      <div class="stage-done" id="lzDone">
+        ✅ 你摸黑走对了每一步。原文说，该向第一缕微光狂奔，或循任意嗡鸣声前行 ——<br />
+        这次你是靠记性走出去的。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P2-04 红室 ============ -->
+<div class="stage" id="stage-redroom">
+  <div class="stage-card">
+    <div class="stage-hd">
+      <span>▩ 红室 · RED ROOMS</span>
+      <span class="grow"></span>
+      <span class="prog" id="rrProg">0 / 2</span>
+      <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+    </div>
+    <div class="stage-bd">
+      <p class="stage-note">
+        八段回廊记录。其中<b>两间是红室</b> —— 一旦完全进入，便再也无法逃离。<br />
+        原文给的判断依据：<b>色调变为红色</b>、<b>地毯变得厚重、粘稠且粗砺</b>、<b>墙纸剥落，暴露出下方的血红色</b>。<br />
+        把这两间挑出来，别走进去。
+      </p>
+
+      <div class="rooms" id="rooms"></div>
+
+      <div class="stage-actions">
+        <button class="btn" id="rrGo" type="button">确认：就这两间</button>
+      </div>
+
+      <div class="stage-out" id="rrOut">还没挑。</div>
+
+      <div class="stage-done" id="rrDone">
+        ✅ 两间红室都认出来了。其余六间的记录 —— 黄壁纸、霉斑地毯、拱门、柱厅、深坑、熄灯区 —— 都只是 Level 0 的常态。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P2-05 地毯 ============ -->
+<div class="stage" id="stage-carpet">
+  <div class="stage-card">
+    <div class="stage-hd">
+      <span>▦ 地毯 · CARPET</span>
+      <span class="grow"></span>
+      <span class="prog" id="cpProg">0 / 6</span>
+      <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+    </div>
+    <div class="stage-bd">
+      <p class="stage-note">
+        你严重脱水。这一层的地面是一整张紧密编织的柏柏尔式地毯，浸湿它的液体来源至今不明。<br />
+        先用试纸<b>把六份样本逐瓶测完</b>，看清里面到底是什么 —— 再决定喝不喝。
+      </p>
+
+      <div class="bottles" id="bottles"></div>
+
+      <div id="cpChoice"></div>
+
+      <div class="stage-out" id="cpOut">六瓶都还没测。点一下瓶子就测一瓶。</div>
+
+      <div class="stage-done" id="cpDone">
+        ✅ 六瓶测完，你一滴没喝。<br />
+        原文写得很清楚 —— <b>地毯本身不可食用，其中的杏仁水也已被污染</b>，
+        即便走投无路，也不要尝试啃食地板。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ P2-06 出口 ============ -->
+<div class="stage" id="stage-exit">
+  <div class="stage-card">
+    <div class="stage-hd">
+      <span>⏏ 出口 · EXIT</span>
+      <span class="grow"></span>
+      <span class="prog" id="exProg">深坑</span>
+      <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+    </div>
+    <div class="stage-bd">
+      <p class="stage-note" id="exNote">
+        地面成片分布着方形<b>深坑</b>，网格状排列，坑内漆黑，光线只能穿透数英尺 ——
+        到目前为止没有流浪者进去后活着出来的报告。<br />
+        你只能处理<b>挨着自己</b>的格子：点没探过的格子是<b>敲一敲</b>（安全），
+        点已探明是实心的格子就是<b>走过去</b>。从左边出发，横穿到右边。
+      </p>
+
+      <div class="pit-grid" id="pitGrid"></div>
+
+      <div class="pit-legend">
+        <span><b>◉</b> 你</span>
+        <span><b>·</b> 实心</span>
+        <span><b>坑</b> 深坑</span>
+        <span><b>?</b> 没探过</span>
+        <span><b>⏏</b> 对岸</span>
+      </div>
+
+      <div id="wallWrap" style="display:none">
+        <p class="stage-note">
+          你横穿了深坑区。尽头是一排墙 —— 其中<b>只有一面在闪烁</b>，
+          其余都只是缓慢地明暗起伏。原文说：<b>存活足够久，直到发现闪烁的墙壁，然后纵身投入其中。</b><br />
+          找到那面<b>不规则闪</b>的墙，点它。
+        </p>
+        <div class="walls" id="walls"></div>
+      </div>
+
+      <div class="stage-out" id="exOut">敲一敲挨着你的格子。深坑不会响。</div>
+
+      <div class="stage-done" id="exDone">
+        ✅ 一面闪烁的墙壁。你纵身投入 ——<br />
+        这里是 <b>Level 1</b>。你终于和那些仍寄居于这世界的零星人类汇合了。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 隐藏结局 ============ -->
+<div class="stage" id="stage-ending">
+  <div class="stage-card end-card">
+    <div class="end-hd">◈ 隐藏结局 · 阈界回访</div>
+    <div class="end-bd" id="endBd"></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  var STORE_MAIN = "wqfws-v3";     // 主线（index.html）的存档，只读
+  var STORE_P2 = "wqfws-p2";       // 第二趟自己的存档
+
+  var P2_STAGES = ["isolation", "noise", "lights", "redroom", "carpet", "exit"];
+  var MAIN_SITE = "https://chuying1-git.github.io/need-key/";
+  var PW_Q = "?pw=2zhouniankuaile";
+
+  /* ============================================================
+     存档
+     ============================================================ */
+  var S2 = {
+    isolation: false, noise: false, lights: false, redroom: false,
+    carpet: false, exit: false,
+    done: false, seen: false
+  };
+
+  function load() {
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(STORE_P2) || "null"); } catch (e) { raw = null; }
+    if (raw && typeof raw === "object") {
+      P2_STAGES.forEach(function (k) { if (typeof raw[k] === "boolean") S2[k] = raw[k]; });
+      S2.done = !!raw.done;
+      S2.seen = !!raw.seen;
+    }
+  }
+  function save() {
+    try { localStorage.setItem(STORE_P2, JSON.stringify(S2)); } catch (e) {}
+  }
+
+  // 读主线进度（只读，不写）
+  function mainProgress() {
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem(STORE_MAIN) || "null"); } catch (e) { raw = null; }
+    var m = raw && typeof raw === "object" ? raw : {};
+    var order = ["photo", "radio", "puzzle", "safe", "timeline", "review", "maze", "spectrum", "terminal", "entities", "final"];
+    var doneCount = order.filter(function (k) { return !!m[k]; }).length;
+    var frags = 0;
+    for (var i = 0; i < 10; i++) if (m[order[i]]) frags++;
+    return { raw: m, unlocked: !!m.final, doneCount: doneCount, frags: frags };
+  }
+
+  /* ============================================================
+     音效（无 Web Audio 时静默）
+     ============================================================ */
+  var actx = null;
+  function audio() {
+    if (actx) return actx;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { actx = new AC(); } catch (e) { actx = null; }
+    return actx;
+  }
+  function beep(freq, dur, type, vol) {
+    var a = audio();
+    if (!a) return;
+    try {
+      var o = a.createOscillator(), g = a.createGain();
+      o.type = type || "sine";
+      o.frequency.value = freq;
+      o.connect(g); g.connect(a.destination);
+      var t = a.currentTime;
+      var v = vol === undefined ? 0.05 : vol;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(v, t + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.start(t); o.stop(t + dur + 0.03);
+    } catch (e) {}
+  }
+
+  /* 四段"声音"的合成：只能靠音色区分，视觉波形也给一份 */
+  function playWave(id) {
+    var a = audio();
+    if (!a) return;
+    try {
+      var t = a.currentTime;
+      if (id === "hum") {
+        // 荧光灯：稳定低频 + 轻微音量起伏
+        [118, 236].forEach(function (f, i) {
+          var o = a.createOscillator(), g = a.createGain();
+          o.type = "sawtooth"; o.frequency.value = f;
+          o.connect(g); g.connect(a.destination);
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.linearRampToValueAtTime(i ? 0.012 : 0.03, t + 0.05);
+          g.gain.linearRampToValueAtTime(i ? 0.006 : 0.016, t + 1.1);
+          g.gain.linearRampToValueAtTime(i ? 0.012 : 0.03, t + 1.9);
+          g.gain.linearRampToValueAtTime(0.0001, t + 2.4);
+          o.start(t); o.stop(t + 2.5);
+        });
+      } else if (id === "whisper") {
+        // 低语：带通噪声
+        var len = Math.floor(a.sampleRate * 2.4);
+        var buf = a.createBuffer(1, len, a.sampleRate);
+        var d = buf.getChannelData(0);
+        for (var i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (0.3 + 0.7 * Math.abs(Math.sin(i / 900)));
+        var src = a.createBufferSource(); src.buffer = buf;
+        var bp = a.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 900; bp.Q.value = 1.8;
+        var g2 = a.createGain();
+        g2.gain.setValueAtTime(0.0001, t);
+        g2.gain.linearRampToValueAtTime(0.05, t + 0.3);
+        g2.gain.linearRampToValueAtTime(0.0001, t + 2.3);
+        src.connect(bp); bp.connect(g2); g2.connect(a.destination);
+        src.start(t); src.stop(t + 2.4);
+      } else if (id === "call") {
+        // 呼唤：三声上滑
+        [0, 0.7, 1.4].forEach(function (off, k) {
+          var o = a.createOscillator(), g = a.createGain();
+          o.type = "triangle";
+          o.frequency.setValueAtTime(320 + k * 40, t + off);
+          o.frequency.exponentialRampToValueAtTime(560 + k * 60, t + off + 0.35);
+          o.connect(g); g.connect(a.destination);
+          g.gain.setValueAtTime(0.0001, t + off);
+          g.gain.linearRampToValueAtTime(0.045, t + off + 0.06);
+          g.gain.linearRampToValueAtTime(0.0001, t + off + 0.42);
+          o.start(t + off); o.stop(t + off + 0.45);
+        });
+      } else {
+        // 刮擦：短促高频脉冲
+        for (var k = 0; k < 7; k++) {
+          var off2 = k * 0.22 + Math.random() * 0.06;
+          var o2 = a.createOscillator(), g3 = a.createGain();
+          o2.type = "square";
+          o2.frequency.value = 1400 + Math.random() * 1600;
+          o2.connect(g3); g3.connect(a.destination);
+          g3.gain.setValueAtTime(0.0001, t + off2);
+          g3.gain.linearRampToValueAtTime(0.03, t + off2 + 0.008);
+          g3.gain.linearRampToValueAtTime(0.0001, t + off2 + 0.05);
+          o2.start(t + off2); o2.stop(t + off2 + 0.06);
+        }
+      }
+    } catch (e) {}
+  }
+
+  /* ============================================================
+     日志
+     ============================================================ */
+  var logEl = null;
+  function print(msg, cls) {
+    if (!logEl) logEl = $("#log");
+    if (!logEl) return;
+    var line = document.createElement("div");
+    if (cls) line.className = cls;
+    line.textContent = msg;
+    logEl.appendChild(line);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  function bigLine(t) {
+    print("");
+    print("── " + t + " ──", "ok");
+  }
+
+  /* ============================================================
+     P2-01 孤立效应
+     ============================================================ */
+  var ISO_W = 7, ISO_H = 7;
+  // 两条足迹，恰好只重合一格（P2 测试会验证这一点）
+  var ISO_A = [[0,0],[0,1],[0,2],[0,3],[1,3],[2,3],[3,3],[3,4],[4,4],[5,4],[6,4]];
+  var ISO_B = [[6,0],[6,1],[6,2],[5,2],[4,2],[3,2],[2,2],[2,3],[2,4],[1,4],[0,4]];
+  function isoIdx(rc) { return rc[0] * ISO_W + rc[1]; }
+  var ISO_ANSWER = 17;  // (2,3) —— 唯一重合
+
+  function isoBuild() {
+    var gridA = $("#isoGridA"), gridB = $("#isoGridB");
+    if (!gridA || !gridB) return;
+    var setA = ISO_A.map(isoIdx), setB = ISO_B.map(isoIdx);
+
+    gridA.innerHTML = ""; gridB.innerHTML = "";
+    var cells = [];
+    for (var i = 0; i < ISO_W * ISO_H; i++) cells.push(i);
+
+    var solved = !!S2.isolation;
+    cells.forEach(function (i) {
+      // 已解出的存档：直接把唯一重合格标出来，不再显示单边足迹
+      var isAns = solved && i === ISO_ANSWER;
+
+      var a = document.createElement("button");
+      a.type = "button";
+      a.className = "ic" + (isAns ? " both" : (setA.indexOf(i) !== -1 ? " you" : ""));
+      a.setAttribute("data-cell", String(i));
+      a.setAttribute("data-side", "a");
+      a.addEventListener("click", function () { isoGuess(i, a); });
+      gridA.appendChild(a);
+
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ic" + (isAns ? " both" : (setB.indexOf(i) !== -1 ? " other" : ""));
+      b.setAttribute("data-cell", String(i));
+      b.setAttribute("data-side", "b");
+      b.addEventListener("click", function () { isoGuess(i, b); });
+      gridB.appendChild(b);
+    });
+  }
+
+  function isoGuess(i, el) {
+    if (S2.isolation) return;
+    var out = $("#isoOut");
+    if (i === ISO_ANSWER) {
+      S2.isolation = true;
+      save();
+      var r = Math.floor(i / ISO_W) + 1, c = (i % ISO_W) + 1;
+      [["#isoGridA", "you"], ["#isoGridB", "other"]].forEach(function (p) {
+        var cell = $(p[0] + ' [data-cell="' + i + '"]');
+        if (cell) { cell.classList.remove("you", "other"); cell.classList.add("both"); }
+      });
+      var ans = $("#isoAns");
+      if (ans) ans.textContent = "第 " + r + " 行第 " + c + " 列";
+      var done = $("#isoDone");
+      if (done) done.classList.add("on");
+      var prog = $("#isoProg");
+      if (prog) prog.textContent = "已找到";
+      if (out) out.innerHTML = '<span class="ok2">✓ 第 ' + r + " 行第 " + c + " 列 —— 两条足迹在这里重合。</span>";
+      bigLine("孤立效应 :: 唯一的例外");
+      print("你推开门。屋里两张椅子，桌上压着一张纸。", "ok");
+      print("噪音模块已解锁。", "warn");
+      beep(720, 0.1); setTimeout(function () { beep(960, 0.14); }, 120);
+      renderAll();
+      setTimeout(function () { closeStage("isolation"); openStage("noise"); }, 1900);
+    } else {
+      el.classList.add("wrong");
+      setTimeout(function () { el.classList.remove("wrong"); }, 700);
+      beep(200, 0.14, "square", 0.04);
+      print("孤立效应：第 " + (Math.floor(i / ISO_W) + 1) + " 行第 " + ((i % ISO_W) + 1) + " 列不是重合点。", "warn");
+      if (out) out.innerHTML = '<span class="er">✗ 这一格只有一边走过。两边都走过的那一格，才是那间房。</span>';
+      var wrap = $(".iso-wrap");
+      if (wrap) { wrap.classList.add("shake"); setTimeout(function () { wrap.classList.remove("shake"); }, 420); }
+    }
+  }
+
+  /* ============================================================
+     P2-02 噪音
+     ============================================================ */
+  var NOISE_SET = [
+    { id: "hum",     title: "持续的低频嗡鸣", desc: "音高始终不变，只有音量在起伏 —— 一盏一直在响的灯。" },
+    { id: "whisper", title: "模糊不清的低语", desc: "断续、含糊，像隔壁有人在说话，听不清词。" },
+    { id: "call",    title: "似曾相识的呼唤", desc: "像有人在喊你，声音从很远的地方过来，还往上挑。" },
+    { id: "scratch", title: "墙后的刮擦声",   desc: "短促、尖锐、一阵一阵，像什么东西在磨利尖爪。" }
+  ];
+  var NOISE_ANSWER = "hum";
+  var noiseSel = null;
+
+  // 波形折线（确定性生成，不随刷新变化）
+  function wavePoints(id) {
+    var pts = [], N = 120;
+    for (var i = 0; i < N; i++) {
+      var x = i / (N - 1), v;
+      if (id === "hum") {
+        v = Math.sin(x * Math.PI * 2 * 9) * (0.42 + 0.16 * Math.sin(x * Math.PI * 2 * 0.9));
+      } else if (id === "whisper") {
+        v = (Math.sin(x * 41) * 0.3 + Math.sin(x * 97) * 0.22 + Math.sin(x * 13) * 0.16) *
+            (0.5 + 0.5 * Math.sin(x * Math.PI * 2 * 3.3));
+      } else if (id === "call") {
+        var burst = Math.exp(-Math.pow((x - 0.18) / 0.07, 2)) +
+                    Math.exp(-Math.pow((x - 0.52) / 0.08, 2)) +
+                    Math.exp(-Math.pow((x - 0.84) / 0.09, 2));
+        v = Math.sin(x * Math.PI * 2 * 5) * Math.min(1, burst) * 0.85;
+      } else {
+        var spike = 0;
+        [0.14, 0.27, 0.33, 0.55, 0.63, 0.79, 0.9].forEach(function (p) {
+          spike += Math.exp(-Math.pow((x - p) / 0.012, 2));
+        });
+        v = Math.min(1, spike) * (Math.sin(x * Math.PI * 2 * 26) * 0.5 + 0.5) * 2 - Math.min(1, spike);
+      }
+      var y = 20 - Math.max(-1, Math.min(1, v)) * 17;
+      pts.push((x * 200).toFixed(1) + "," + y.toFixed(1));
+    }
+    return pts.join(" ");
+  }
+
+  function noiseBuild() {
+    var box = $("#waves");
+    if (!box) return;
+    box.innerHTML = "";
+    noiseSel = null;   // 重开时清掉上次的选中，避免选中态和实际判定不一致
+    NOISE_SET.forEach(function (w, i) {
+      var card = document.createElement("div");
+      card.className = "wave";
+      card.setAttribute("data-wave", w.id);
+
+      var top = document.createElement("div");
+      top.className = "wv-top";
+      var nm = document.createElement("span");
+      nm.className = "wv-name";
+      nm.textContent = "样本 " + "ABCD".charAt(i);
+      var ti = document.createElement("span");
+      ti.className = "wv-title";
+      ti.textContent = w.title;
+      top.appendChild(nm); top.appendChild(ti);
+
+      var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("class", "wv-svg");
+      svg.setAttribute("viewBox", "0 0 200 40");
+      svg.setAttribute("preserveAspectRatio", "none");
+      var pl = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+      pl.setAttribute("points", wavePoints(w.id));
+      svg.appendChild(pl);
+
+      var de = document.createElement("div");
+      de.className = "wv-desc";
+      de.textContent = w.desc;
+
+      var pl2 = document.createElement("button");
+      pl2.type = "button";
+      pl2.className = "wv-play";
+      pl2.textContent = "▶ 试听";
+      pl2.addEventListener("click", function (e) {
+        e.stopPropagation();
+        playWave(w.id);
+        beep(520, 0.04, "sine", 0.02);
+      });
+
+      card.appendChild(top); card.appendChild(svg); card.appendChild(de); card.appendChild(pl2);
+      card.addEventListener("click", function () {
+        if (S2.noise) return;
+        noiseSel = w.id;
+        $$("#waves .wave").forEach(function (c) { c.classList.remove("sel"); });
+        card.classList.add("sel");
+        var out = $("#noiseOut");
+        if (out) out.textContent = "已选中「" + w.title + "」。按上面的按钮确认。";
+        beep(600, 0.05);
+      });
+      box.appendChild(card);
+    });
+  }
+
+  function noiseSubmit() {
+    if (S2.noise) return;
+    var out = $("#noiseOut");
+    if (!noiseSel) {
+      beep(190, 0.12, "square", 0.035);
+      if (out) out.innerHTML = '<span class="er">还没选 —— 先点一段波形。</span>';
+      return;
+    }
+    if (noiseSel === NOISE_ANSWER) {
+      S2.noise = true;
+      save();
+      var done = $("#noiseDone");
+      if (done) done.classList.add("on");
+      var prog = $("#noiseProg");
+      if (prog) prog.textContent = "1 / 1";
+      $$("#waves .wave").forEach(function (c) { c.classList.remove("sel", "wrong"); });
+      if (out) out.innerHTML = '<span class="ok2">✓ 就是这一段。音高从没变过，只有音量在起伏。</span>';
+      bigLine("噪音 :: 荧光灯的嗡鸣");
+      print("你认出了那盏灯。剩下三段声音，你按原文说的无视了。", "ok");
+      print("熄灯区模块已解锁。", "warn");
+      beep(720, 0.1); setTimeout(function () { beep(960, 0.14); }, 120);
+      renderAll();
+      setTimeout(function () { closeStage("noise"); openStage("lights"); }, 1900);
+    } else {
+      beep(200, 0.16, "square", 0.045);
+      var card = $('#waves .wave[data-wave="' + noiseSel + '"]');
+      if (card) {
+        card.classList.add("wrong");
+        setTimeout(function () { card.classList.remove("wrong"); }, 800);
+      }
+      var w = NOISE_SET.filter(function (x) { return x.id === noiseSel; })[0];
+      print("噪音：不是「" + (w ? w.title : noiseSel) + "」。再听一遍调子有没有变。", "warn");
+      if (out) out.innerHTML = '<span class="er">✗ 那一段的音高一直在变。要找的是<b>调子不变</b>的那一盏。</span>';
+      noiseSel = null;
+      $$("#waves .wave").forEach(function (c) { c.classList.remove("sel"); });
+    }
+  }
+
+  /* ============================================================
+     P2-03 熄灯区
+     ============================================================ */
+  var LZ_W = 5, LZ_H = 5, LZ_LEN = 6;
+  var lzSeq = [], lzStep = 0, lzDark = false;
+
+  function lzGen() {
+    var pool = [];
+    for (var i = 0; i < LZ_W * LZ_H; i++) pool.push(i);
+    // 洗牌后取前 LZ_LEN 个
+    for (var j = pool.length - 1; j > 0; j--) {
+      var k = Math.floor(Math.random() * (j + 1));
+      var t = pool[j]; pool[j] = pool[k]; pool[k] = t;
+    }
+    lzSeq = pool.slice(0, LZ_LEN);
+    lzStep = 0;
+    lzDark = false;
+  }
+
+  function lzBuild() {
+    var grid = $("#lzGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    var cells = [];
+    for (var i = 0; i < LZ_W * LZ_H; i++) cells.push(i);
+    cells.forEach(function (i) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "lz";
+      b.setAttribute("data-cell", String(i));
+      var pos = lzSeq.indexOf(i);
+      if (pos !== -1 && !lzDark) {
+        b.classList.add("lit");
+        b.textContent = String(pos + 1);
+        b.setAttribute("data-step", String(pos + 1));
+      }
+      b.addEventListener("click", function () { lzClick(i, b); });
+      grid.appendChild(b);
+    });
+  }
+
+  function lzRender() {
+    var grid = $("#lzGrid");
+    if (!grid) return;
+    grid.classList.toggle("dark", lzDark);
+    $$("#lzGrid .lz").forEach(function (b) {
+      var i = parseInt(b.getAttribute("data-cell"), 10);
+      var pos = lzSeq.indexOf(i);
+      b.className = "lz";
+      b.textContent = "";
+      b.removeAttribute("data-step");
+      if (!lzDark && pos !== -1) {
+        b.classList.add("lit");
+        b.textContent = String(pos + 1);
+        b.setAttribute("data-step", String(pos + 1));
+      } else if (lzDark) {
+        var donePos = lzSeq.indexOf(i);
+        if (donePos !== -1 && donePos < lzStep) b.classList.add("hit");
+      }
+    });
+    var prog = $("#lzProg");
+    if (prog) prog.textContent = S2.lights ? "已走出" : (lzDark ? lzStep + " / " + LZ_LEN : "待解");
+  }
+
+  function lzClick(i, el) {
+    if (S2.lights || !lzDark) return;
+    var out = $("#lzOut");
+    if (i === lzSeq[lzStep]) {
+      lzStep++;
+      beep(560 + lzStep * 60, 0.06);
+      lzRender();
+      if (lzStep >= LZ_LEN) { lzWin(); return; }
+      if (out) out.textContent = "对。第 " + lzStep + " 格。" + (lzStep < LZ_LEN ? " 继续。" : "");
+    } else {
+      beep(180, 0.2, "square", 0.05);
+      el.classList.add("miss");
+      setTimeout(function () { el.classList.remove("miss"); }, 500);
+      var wrongAt = lzStep;
+      lzStep = 0;
+      lzRender();
+      if (out) out.innerHTML = '<span class="er">✗ 第 ' + (wrongAt + 1) + " 步走错了 —— 退回第一步，灯不会重亮。凭记忆重来。</span>";
+      print("熄灯区：第 " + (wrongAt + 1) + " 步错了。", "warn");
+      var grid = $("#lzGrid");
+      if (grid) { grid.classList.add("shake"); setTimeout(function () { grid.classList.remove("shake"); }, 420); }
+    }
+  }
+
+  function lzWin() {
+    S2.lights = true;
+    save();
+    var done = $("#lzDone");
+    if (done) done.classList.add("on");
+    var out = $("#lzOut");
+    if (out) out.innerHTML = '<span class="ok2">✓ ' + LZ_LEN + " 格全对。你摸黑走了出去。</span>";
+    var hide = $("#lzHide");
+    if (hide) hide.disabled = true;
+    bigLine("熄灯区 :: 凭记忆走出去");
+    print("灯全灭，你靠着记性把 " + LZ_LEN + " 格走完了。", "ok");
+    print("红室模块已解锁。", "warn");
+    beep(720, 0.1); setTimeout(function () { beep(960, 0.14); }, 120);
+    lzRender();
+    renderAll();
+    setTimeout(function () { closeStage("lights"); openStage("redroom"); }, 1900);
+  }
+
+  /* ============================================================
+     P2-04 红室
+     ============================================================ */
+  var ROOMS = [
+    { id: "r1", red: true,  txt: "回廊整体色调发深红，一眼就不对。地毯厚重、粘稠、粗砺，踩上去发黏；墙纸一片片剥落，露出底下的血红色。" },
+    { id: "r2", red: false, txt: "病态的黄色墙纸，地毯覆满霉斑，荧光灯的嗡鸣忽大忽小。走了几分钟，走廊换了位置。" },
+    { id: "r3", red: false, txt: "苍白的墙壁上布满拱形孔洞。地毯明显增厚，通行有点吃力，有几个拱洞的宽度刚好能坐下歇脚。" },
+    { id: "r4", red: true,  txt: "越往里走，墙面的黄色越被一层暗红吃掉。脚下地毯开始发粘、变厚，角落的墙纸卷起，背面是血红色。" },
+    { id: "r5", red: false, txt: "巨大的立柱房间，纵横交错的棋盘状布局，一眼望不到边。地毯绒毛较浅，地面相对干燥。" },
+    { id: "r6", red: false, txt: "地面成片分布着方形坑洞，网格状排列。坑内漆黑，光线只穿透数英尺，看不见底。" },
+    { id: "r7", red: false, txt: "完全无照明的走廊，荧光灯不再嗡鸣，四周死一般寂静。墙壁触感粗糙，低洼处有没过脚踝的积液。" },
+    { id: "r8", red: false, txt: "一整张柏柏尔式地毯无缝铺到底，单独看色调其实接近褐米色，只是被灯光照得发黄。常年潮湿，质地粗糙。" }
+  ];
+  var ROOM_ANSWER = ROOMS.filter(function (r) { return r.red; }).map(function (r) { return r.id; });
+  var roomSel = [];
+
+  function roomsBuild() {
+    var box = $("#rooms");
+    if (!box) return;
+    box.innerHTML = "";
+    ROOMS.forEach(function (r, i) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "room";
+      b.setAttribute("data-room", r.id);
+      var idEl = document.createElement("span");
+      idEl.className = "room-id";
+      idEl.textContent = "记录 " + String.fromCharCode(65 + i);
+      b.appendChild(idEl);
+      b.appendChild(document.createTextNode(r.txt));
+      b.addEventListener("click", function () {
+        if (S2.redroom) return;
+        var k = roomSel.indexOf(r.id);
+        if (k === -1) { if (roomSel.length >= 2) roomSel.shift(); roomSel.push(r.id); }
+        else roomSel.splice(k, 1);
+        beep(k === -1 ? 600 : 420, 0.05);
+        roomsRender();
+      });
+      box.appendChild(b);
+    });
+    roomsRender();
+  }
+
+  function roomsRender() {
+    $$("#rooms .room").forEach(function (b) {
+      var id = b.getAttribute("data-room");
+      b.classList.toggle("sel", roomSel.indexOf(id) !== -1);
+      b.classList.toggle("right", !!S2.redroom && ROOM_ANSWER.indexOf(id) !== -1);
+    });
+    var prog = $("#rrProg");
+    if (prog) prog.textContent = (S2.redroom ? 2 : roomSel.length) + " / 2";
+  }
+
+  function roomsSubmit() {
+    if (S2.redroom) return;
+    var out = $("#rrOut");
+    if (roomSel.length !== 2) {
+      beep(190, 0.12, "square", 0.035);
+      if (out) out.innerHTML = '<span class="er">要挑满两间 —— 现在选了 ' + roomSel.length + " 间。</span>";
+      return;
+    }
+    var picked = roomSel.slice().sort().join(",");
+    var want = ROOM_ANSWER.slice().sort().join(",");
+    if (picked === want) {
+      S2.redroom = true;
+      save();
+      roomsRender();
+      var done = $("#rrDone");
+      if (done) done.classList.add("on");
+      if (out) out.innerHTML = '<span class="ok2">✓ 两间红室都认出来了。你转身，径直离开。</span>';
+      bigLine("红室 :: 认出来了");
+      print("你认出了那两间，转身就走。", "ok");
+      print("走了太久，你严重脱水 —— 地毯模块已解锁。", "warn");
+      beep(720, 0.1);
+      setTimeout(function () { beep(960, 0.12); }, 120);
+      setTimeout(function () { beep(1200, 0.24); }, 260);
+      renderAll();
+      setTimeout(function () { closeStage("redroom"); openStage("carpet"); }, 2000);
+    } else {
+      var hit = roomSel.filter(function (id) { return ROOM_ANSWER.indexOf(id) !== -1; }).length;
+      beep(200, 0.16, "square", 0.045);
+      $$("#rooms .room").forEach(function (b) {
+        var id = b.getAttribute("data-room");
+        if (roomSel.indexOf(id) !== -1 && ROOM_ANSWER.indexOf(id) === -1) b.classList.add("wrongpick");
+      });
+      setTimeout(function () {
+        $$("#rooms .room").forEach(function (b) { b.classList.remove("wrongpick"); });
+      }, 900);
+      print("红室：两间里只有 " + hit + " 间是对的。", "warn");
+      if (out) out.innerHTML = '<span class="er">✗ 挑中 ' + hit + " / 2 间。盯住三件事：色调、地毯的质地、墙纸背面。</span>";
+      var box = $("#rooms");
+      if (box) { box.classList.add("shake"); setTimeout(function () { box.classList.remove("shake"); }, 420); }
+    }
+  }
+
+  /* ============================================================
+     P2-05 地毯
+     原文：浸湿地毯的液体成分驳杂 —— 盐水、咸淡水、杏仁水、液态痛苦、
+     福尔马林，甚至含有人类与非人类 DNA 的浑浊浆液；
+     地毯本身不可食用，其中的杏仁水也已被污染。
+     → 正确答案是「一瓶都别喝」
+     ============================================================ */
+  var CARPET_SAMPLES = [
+    { id: "A", name: "盐水",     read: "氯化钠 3.4%，未检出其他溶质。",          pol: 91 },
+    { id: "B", name: "咸淡水",   read: "盐度介于海水与淡水之间，悬浮物偏多。",    pol: 87 },
+    { id: "C", name: "杏仁水",   read: "杏仁水阳性 —— 但浑浊，有絮状物。",        pol: 78 },
+    { id: "D", name: "液态痛苦", read: "液态痛苦阳性。",                        pol: 96 },
+    { id: "E", name: "福尔马林", read: "甲醛 10%，具组织固定液特征。",            pol: 99 },
+    { id: "F", name: "DNA 浆液", read: "人类与非人类 DNA 混合的浑浊浆液。",       pol: 84 }
+  ];
+  var CARPET_LIMIT = 20;        // 可饮用阈值（%）
+  var CARPET_ANSWER = "none";   // 唯一正解：都不喝
+  var carpetTested = [];
+
+  function carpetBuild() {
+    var box = $("#bottles");
+    if (!box) return;
+    box.innerHTML = "";
+    carpetTested = S2.carpet ? CARPET_SAMPLES.map(function (s) { return s.id; }) : [];
+    CARPET_SAMPLES.forEach(function (s, i) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "btl";
+      b.setAttribute("data-btl", s.id);
+
+      var tag = document.createElement("span");
+      tag.className = "btl-tag";
+      tag.textContent = "样本 " + s.id + " · 瓶 " + (i + 1);
+
+      var nm = document.createElement("span");
+      nm.className = "btl-name";
+      nm.textContent = s.name;
+
+      var rd = document.createElement("span");
+      rd.className = "btl-read";
+      rd.textContent = "成分读数：未检测";
+
+      var pl = document.createElement("span");
+      pl.className = "btl-pol";
+      pl.textContent = "污染指数：—";
+
+      b.appendChild(tag); b.appendChild(nm); b.appendChild(rd); b.appendChild(pl);
+      b.addEventListener("click", function () { carpetTest(s, b); });
+      box.appendChild(b);
+    });
+    carpetRender();
+  }
+
+  function carpetRender() {
+    $$("#bottles .btl").forEach(function (b) {
+      var id = b.getAttribute("data-btl");
+      var s = CARPET_SAMPLES.filter(function (x) { return x.id === id; })[0];
+      if (!s) return;
+      var on = carpetTested.indexOf(id) !== -1;
+      b.classList.toggle("detected", on);
+      var rd = b.querySelector(".btl-read");
+      var pl = b.querySelector(".btl-pol");
+      if (on) {
+        if (rd) rd.textContent = "成分读数：" + s.read;
+        if (pl) pl.textContent = "污染指数：" + s.pol + "%（阈值 ≤ " + CARPET_LIMIT + "%）";
+      } else {
+        if (rd) rd.textContent = "成分读数：未检测";
+        if (pl) pl.textContent = "污染指数：—";
+      }
+    });
+    var pr = $("#cpProg");
+    if (pr) pr.textContent = S2.carpet ? "已判定" : carpetTested.length + " / " + CARPET_SAMPLES.length;
+    carpetChoiceRender();
+  }
+
+  function carpetTest(s, el) {
+    if (S2.carpet || carpetTested.indexOf(s.id) !== -1) return;
+    carpetTested.push(s.id);
+    beep(640, 0.05);
+    carpetRender();
+    var out = $("#cpOut");
+    var left = CARPET_SAMPLES.length - carpetTested.length;
+    if (out) {
+      out.innerHTML = "样本 " + s.id + "（" + s.name + "）测完 —— <b>污染指数 " + s.pol + "%</b>。" +
+        (left > 0 ? "还剩 " + left + " 瓶。" : "六瓶都测完了。");
+    }
+    if (carpetTested.length === CARPET_SAMPLES.length) {
+      if (out) out.innerHTML = "六瓶全部测完 —— <b>没有一瓶低于阈值</b>。现在做决定。";
+      bigLine("地毯 :: 六份样本");
+      print("盐水 91% / 咸淡水 87% / 杏仁水 78% / 液态痛苦 96% / 福尔马林 99% / DNA 浆液 84%", "dim");
+      print("全都远高于可饮用阈值 20%。", "warn");
+      beep(880, 0.1);
+    }
+  }
+
+  function carpetChoiceRender() {
+    var box = $("#cpChoice");
+    if (!box) return;
+    if (S2.carpet) { box.innerHTML = ""; return; }
+    if (carpetTested.length !== CARPET_SAMPLES.length) { box.innerHTML = ""; return; }
+    if (box.children.length) return;   // 已经渲染过
+
+    var wrap = document.createElement("div");
+    wrap.className = "cp-choice";
+    var q = document.createElement("div");
+    q.className = "cp-q";
+    q.textContent = "你的嗓子已经干得发不出声了。喝哪一瓶？";
+    var row = document.createElement("div");
+    row.className = "cp-row";
+
+    CARPET_SAMPLES.forEach(function (s) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn drink";
+      b.setAttribute("data-drink", s.id);
+      b.textContent = "喝 " + s.id + " · " + s.name;
+      b.addEventListener("click", function () { carpetChoose(s); });
+      row.appendChild(b);
+    });
+
+    var none = document.createElement("button");
+    none.type = "button";
+    none.className = "btn";
+    none.setAttribute("data-drink", "none");
+    none.textContent = "都不喝";
+    none.addEventListener("click", function () { carpetChoose(null); });
+    row.appendChild(none);
+
+    wrap.appendChild(q); wrap.appendChild(row);
+    box.appendChild(wrap);
+  }
+
+  function carpetChoose(s) {
+    if (S2.carpet) return;
+    var out = $("#cpOut");
+    var wrap = $("#cpChoice .cp-choice");
+
+    if (s === null) {
+      S2.carpet = true;
+      save();
+      if (wrap) wrap.classList.add("good");
+      var done = $("#cpDone");
+      if (done) done.classList.add("on");
+      var cpr = $("#cpProg");
+      if (cpr) cpr.textContent = "已判定";
+      if (out) out.innerHTML = '<span class="ok2">✓ 你一滴没喝。地毯里的杏仁水也已经被污染了。</span>';
+      bigLine("地毯 :: 一瓶都没喝");
+      print("你想起那句话 —— 别喝，更别啃地毯。", "ok");
+      print("出口模块已解锁。", "warn");
+      beep(760, 0.1); setTimeout(function () { beep(1040, 0.14); }, 120);
+      renderAll();
+      setTimeout(function () { closeStage("carpet"); openStage("exit"); }, 2100);
+    } else {
+      beep(190, 0.2, "square", 0.05);
+      if (wrap) { wrap.classList.add("bad"); setTimeout(function () { wrap.classList.remove("bad"); }, 900); }
+      var btl = $('#bottles .btl[data-btl="' + s.id + '"]');
+      if (btl) { btl.classList.add("shake"); setTimeout(function () { btl.classList.remove("shake"); }, 420); }
+      print("地毯：你拿起了 " + s.name + " —— 污染指数 " + s.pol + "%。", "er");
+      if (out) {
+        out.innerHTML = '<span class="er">✗ 这不是水，是污染样本。原文说得直白：' +
+          "别吃地毯 —— 有人九死一生逃出来，最后死于地毯病或是被纤维堵了肠子。</span>";
+      }
+    }
+  }
+
+  /* ============================================================
+     P2-06 出口（深坑 → 闪烁的墙壁）
+     ============================================================ */
+  var PIT_W = 6, PIT_H = 5;
+  var PIT_MAP = [
+    "..P...",
+    ".P..P.",
+    "S..P.E",
+    ".P..P.",
+    "..P..."
+  ];
+  var PIT_START = [2, 0];
+  var PIT_GOAL = [2, 5];
+  var pitHere = [2, 0];
+  var pitKnown = {};      // cellIndex -> "solid" | "pit"
+  var pitMoves = 0;
+  var pitBudget = 0;
+  var exitPhase = "pit";
+
+  function pitIsPit(r, c) { return PIT_MAP[r].charAt(c) === "P"; }
+  function pitIdx(r, c) { return r * PIT_W + c; }
+  function pitRC(i) { return [Math.floor(i / PIT_W), i % PIT_W]; }
+
+  // 自动算最短步数，预算 = 最短 + 8（不写死，改地图不用改预算）
+  function pitShortest() {
+    var startI = pitIdx(PIT_START[0], PIT_START[1]);
+    var goalI = pitIdx(PIT_GOAL[0], PIT_GOAL[1]);
+    var dist = {}, q = [startI];
+    dist[startI] = 0;
+    while (q.length) {
+      var cur = q.shift();
+      if (cur === goalI) break;
+      var rc = pitRC(cur);
+      [[rc[0] - 1, rc[1]], [rc[0] + 1, rc[1]], [rc[0], rc[1] - 1], [rc[0], rc[1] + 1]].forEach(function (n) {
+        var nr = n[0], nc = n[1];
+        if (nr < 0 || nr >= PIT_H || nc < 0 || nc >= PIT_W) return;
+        if (pitIsPit(nr, nc)) return;
+        var ni = pitIdx(nr, nc);
+        if (dist[ni] === undefined) { dist[ni] = dist[cur] + 1; q.push(ni); }
+      });
+    }
+    return dist[goalI];
+  }
+
+  function pitReset(keepKnowledge) {
+    pitHere = PIT_START.slice();
+    pitMoves = 0;
+    if (!keepKnowledge) pitKnown = {};
+    pitKnown[pitIdx(PIT_START[0], PIT_START[1])] = "solid";
+    exitPhase = "pit";
+  }
+
+  function pitBuild() {
+    var grid = $("#pitGrid");
+    if (!grid) return;
+    if (!pitBudget) {
+      var sp = pitShortest();
+      pitBudget = (sp === undefined ? 20 : sp + 8);
+      pitKnown[pitIdx(PIT_START[0], PIT_START[1])] = "solid";
+      pitHere = PIT_START.slice();
+    }
+    grid.innerHTML = "";
+    for (var i = 0; i < PIT_W * PIT_H; i++) {
+      var rc = pitRC(i);
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "pc";
+      b.setAttribute("data-cell", String(i));
+      b.addEventListener("click", function (idx, el) {
+        return function () { pitClick(idx, el); };
+      }(i, b));
+      grid.appendChild(b);
+    }
+    pitRender();
+  }
+
+  function pitRender() {
+    var grid = $("#pitGrid");
+    if (!grid) return;
+    var hereI = pitIdx(pitHere[0], pitHere[1]);
+    var goalI = pitIdx(PIT_GOAL[0], PIT_GOAL[1]);
+    $$("#pitGrid .pc").forEach(function (b) {
+      var i = parseInt(b.getAttribute("data-cell"), 10);
+      var rc = pitRC(i);
+      var known = pitKnown[i];
+      b.className = "pc";
+      b.textContent = "?";
+      if (known === "solid") { b.classList.add("solid"); b.textContent = "·"; }
+      else if (known === "pit") { b.classList.add("pit"); b.textContent = "坑"; }
+      if (i === goalI) b.classList.add("goal");
+      if (i === hereI) { b.classList.add("here"); b.textContent = "◉"; }
+      else if (i === goalI && known === "solid") b.textContent = "⏏";
+    });
+    var pr = $("#exProg");
+    if (pr) pr.textContent = S2.exit ? "已逃出" : (exitPhase === "wall" ? "闪烁的墙壁" : "深坑 " + pitMoves + " / " + pitBudget);
+  }
+
+  function pitAdjacent(r, c) {
+    return Math.abs(r - pitHere[0]) + Math.abs(c - pitHere[1]) === 1;
+  }
+
+  function pitClick(i, el) {
+    if (S2.exit || exitPhase !== "pit") return;
+    var rc = pitRC(i);
+    var r = rc[0], c = rc[1];
+    var out = $("#exOut");
+
+    if (!pitAdjacent(r, c)) {
+      beep(200, 0.1, "square", 0.03);
+      if (out) out.innerHTML = '<span class="er">手够不到 —— 只能处理紧挨着你上下左右的那一格。</span>';
+      return;
+    }
+
+    var known = pitKnown[i];
+    if (!known) {
+      // 敲一敲：安全，只是探明
+      var isPit = pitIsPit(r, c);
+      pitKnown[i] = isPit ? "pit" : "solid";
+      beep(isPit ? 240 : 520, isPit ? 0.16 : 0.05, isPit ? "square" : "sine");
+      pitRender();
+      if (isPit) {
+        if (out) out.innerHTML = '<span class="er">你敲了敲 —— <b>空的</b>。下面是深坑，掉下去没有底，也没有生还报告。绕开它。</span>';
+        print("深坑：第 " + (r + 1) + " 行第 " + (c + 1) + " 列探明为坑。", "warn");
+      } else {
+        if (out) out.innerHTML = "你敲了敲 —— <b>实心</b>。可以踩。";
+      }
+      return;
+    }
+
+    if (known === "pit") {
+      beep(200, 0.1, "square", 0.03);
+      if (out) out.innerHTML = '<span class="er">这里已经探明是深坑了，别再往前。</span>';
+      return;
+    }
+
+    // 已知实心 → 走过去
+    pitHere = [r, c];
+    pitMoves++;
+    beep(560, 0.05);
+    if (i === pitIdx(PIT_GOAL[0], PIT_GOAL[1])) { pitWin(); return; }
+    if (pitMoves > pitBudget) {
+      pitReset(true);   // 保留已经探明的地形
+      if (out) out.innerHTML = '<span class="er">在这儿耗得太久 —— 布局变了，你被甩回坠入的地方。<b>探过的地形你还记得。</b></span>';
+      print("深坑：超时，退回起点（地形记忆保留）。", "warn");
+      beep(180, 0.3, "square", 0.05);
+      var g = $("#pitGrid");
+      if (g) { g.classList.add("shake"); setTimeout(function () { g.classList.remove("shake"); }, 420); }
+      pitRender();
+      return;
+    }
+    pitRender();
+    if (out) out.textContent = "往前一步。" + (pitMoves >= pitBudget - 3 ? " 你在这儿待得太久了。" : "");
+  }
+
+  function pitWin() {
+    exitPhase = "wall";
+    var grid = $("#pitGrid");
+    if (grid) grid.style.display = "none";
+    var legend = $(".pit-legend");
+    if (legend) legend.style.display = "none";
+    var wrap = $("#wallWrap");
+    if (wrap) wrap.style.display = "";
+    var note = $("#exNote");
+    if (note) note.style.display = "none";
+    wallsBuild();
+    pitRender();
+    var out = $("#exOut");
+    if (out) out.innerHTML = '<span class="ok2">✓ 你横穿过去了，一步都没踩空。</span>';
+    bigLine("深坑 :: 横穿");
+    print("你避开了所有深坑，用了 " + pitMoves + " 步（预算 " + pitBudget + "）。", "ok");
+    beep(720, 0.1); setTimeout(function () { beep(980, 0.14); }, 120);
+  }
+
+  var WALLS = 6, WALL_TARGET = 4;   // 第 5 面是不规则闪烁的那面
+
+  function wallsBuild() {
+    var box = $("#walls");
+    if (!box || box.children.length) return;
+    for (var i = 0; i < WALLS; i++) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "wl";
+      b.setAttribute("data-wall", String(i));
+      b.textContent = "墙 " + (i + 1);
+      if (i === WALL_TARGET) { b.classList.add("flick"); b.setAttribute("data-flicker", "1"); }
+      b.addEventListener("click", function (idx, el) {
+        return function () { wallClick(idx, el); };
+      }(i, b));
+      box.appendChild(b);
+    }
+  }
+
+  function wallClick(i, el) {
+    if (S2.exit) return;
+    var out = $("#exOut");
+    if (i === WALL_TARGET) {
+      S2.exit = true;
+      save();
+      el.classList.add("right");
+      var done = $("#exDone");
+      if (done) done.classList.add("on");
+      if (out) out.innerHTML = '<span class="ok2">✓ 就是它 —— 那面闪得不规则的墙。你纵身投入。</span>';
+      var pr = $("#exProg");
+      if (pr) pr.textContent = "已逃出";
+      bigLine("出口 :: 闪烁的墙壁");
+      print("你投入那面闪烁的墙壁。这里是 Level 1。", "ok");
+      print("六个模块全部完成。", "warn");
+      beep(720, 0.1);
+      setTimeout(function () { beep(960, 0.12); }, 120);
+      setTimeout(function () { beep(1280, 0.3); }, 260);
+      renderAll();
+      setTimeout(function () { closeStage("exit"); openEnding(); }, 2200);
+    } else {
+      beep(200, 0.12, "square", 0.04);
+      el.classList.add("wrong");
+      setTimeout(function () { el.classList.remove("wrong"); }, 700);
+      if (out) out.innerHTML = '<span class="er">这面墙只是缓慢地明暗起伏 —— 不是它。找<b>闪得不规则</b>的那一面。</span>';
+      print("出口：墙 " + (i + 1) + " 不是。", "warn");
+    }
+  }
+
+  /* ============================================================
+     结局
+     ============================================================ */
+  var P2_ENDING = [
+    { t: "你推开了那扇门。" },
+    { t: "狭小的房间。两张椅子。桌上压着一张纸，边角被地毯的液体浸黄了。" },
+    { sep: true },
+    { t: "从后室归来", q: true },
+    { t: "二周年快乐", q: true },
+    { sep: true },
+    { t: "是你的字迹。你不记得自己写过。" },
+    { t: "纸的背面还有一行，被水渍晕开了一半 —— 现在你终于把它读全了：" },
+    { sep: true },
+    { t: "孤立效应说，两个人永远找不到彼此。", q: true },
+    { t: "它没说，先出去的那个人可以再回来一趟。", q: true },
+    { sep: true },
+    { t: "便签角落压着一个日期：两年前的今天。" }
+  ];
+
+  function renderEnding() {
+    var bd = $("#endBd");
+    if (!bd || bd.children.length) return;
+    P2_ENDING.forEach(function (row) {
+      var el = document.createElement("span");
+      if (row.sep) { el.className = "sep"; bd.appendChild(el); return; }
+      el.className = row.q ? "quote" : "plain";
+      el.textContent = row.t;
+      bd.appendChild(el);
+      bd.appendChild(document.createTextNode("\n"));
+    });
+    var link = document.createElement("div");
+    link.className = "end-link";
+    var a1 = document.createElement("a");
+    a1.href = "./index.html";
+    a1.textContent = "← 回到第一趟";
+    var a2 = document.createElement("a");
+    a2.href = MAIN_SITE + PW_Q;
+    a2.target = "_blank";
+    a2.rel = "noopener";
+    a2.textContent = "进入主站 →";
+    var a3 = document.createElement("a");
+    a3.href = "#";
+    a3.setAttribute("data-replay", "1");
+    a3.textContent = "再看一遍";
+    a3.addEventListener("click", function (e) {
+      e.preventDefault();
+      bd.innerHTML = "";
+      renderEnding();
+    });
+    link.appendChild(a1); link.appendChild(a2); link.appendChild(a3);
+    bd.appendChild(link);
+  }
+
+  function openEnding() {
+    renderEnding();
+    var el = $("#stage-ending");
+    if (el) el.classList.add("on");
+    if (!S2.done) {
+      S2.done = true;
+      save();
+      bigLine("隐藏结局 :: 阈界回访");
+      print("第二趟结束。你找到了那间房。", "ok");
+      beep(660, 0.12);
+      setTimeout(function () { beep(880, 0.12); }, 130);
+      setTimeout(function () { beep(1320, 0.3); }, 270);
+    }
+    renderAll();
+  }
+
+  /* ============================================================
+     面板开关 / 总渲染
+     ============================================================ */
+  // 关卡已完成时，重新打开要把完成面板和状态字还原（否则会显示成未解）
+  function restoreStage(id) {
+    var d, pr, out, btn;
+    if (id === "isolation" && S2.isolation) {
+      d = $("#isoDone"); if (d) d.classList.add("on");
+      pr = $("#isoProg"); if (pr) pr.textContent = "已找到";
+      out = $("#isoOut"); if (out) out.innerHTML = '<span class="ok2">✓ 已经找到了那间房。</span>';
+    }
+    if (id === "noise" && S2.noise) {
+      d = $("#noiseDone"); if (d) d.classList.add("on");
+      pr = $("#noiseProg"); if (pr) pr.textContent = "1 / 1";
+      out = $("#noiseOut"); if (out) out.innerHTML = '<span class="ok2">✓ 已经认出荧光灯的嗡鸣。</span>';
+      $$("#waves .wave").forEach(function (c) { c.classList.remove("sel", "wrong"); });
+    }
+    if (id === "lights" && S2.lights) {
+      d = $("#lzDone"); if (d) d.classList.add("on");
+      out = $("#lzOut"); if (out) out.innerHTML = '<span class="ok2">✓ 已经走出熄灯区。</span>';
+      btn = $("#lzHide"); if (btn) btn.disabled = true;
+    }
+    if (id === "redroom" && S2.redroom) {
+      d = $("#rrDone"); if (d) d.classList.add("on");
+      out = $("#rrOut"); if (out) out.innerHTML = '<span class="ok2">✓ 两间红室都认出来了。</span>';
+    }
+    if (id === "carpet" && S2.carpet) {
+      d = $("#cpDone"); if (d) d.classList.add("on");
+      out = $("#cpOut"); if (out) out.innerHTML = '<span class="ok2">✓ 六瓶测完，你一滴没喝。</span>';
+      var ch = $("#cpChoice"); if (ch) ch.innerHTML = "";
+      pr = $("#cpProg"); if (pr) pr.textContent = "已判定";
+    }
+    if (id === "exit" && S2.exit) {
+      var pg = $("#pitGrid"); if (pg) pg.style.display = "none";
+      var pl = $(".pit-legend"); if (pl) pl.style.display = "none";
+      var nt = $("#exNote"); if (nt) nt.style.display = "none";
+      var ww = $("#wallWrap"); if (ww) ww.style.display = "";
+      wallsBuild();
+      var tw = $('#walls .wl[data-wall="' + WALL_TARGET + '"]');
+      if (tw) tw.classList.add("right");
+      d = $("#exDone"); if (d) d.classList.add("on");
+      out = $("#exOut"); if (out) out.innerHTML = '<span class="ok2">✓ 已经投入那面闪烁的墙壁。</span>';
+      pr = $("#exProg"); if (pr) pr.textContent = "已逃出";
+    }
+  }
+
+  function openStage(id) {
+    var el = $("#stage-" + id);
+    if (!el) return;
+    el.classList.add("on");
+    if (id === "isolation") isoBuild();
+    if (id === "noise") noiseBuild();
+    if (id === "lights") { if (!S2.lights && !lzSeq.length) lzGen(); lzBuild(); lzRender(); }
+    if (id === "redroom") roomsBuild();
+    if (id === "carpet") carpetBuild();
+    if (id === "exit") pitBuild();
+    restoreStage(id);
+    beep(600, 0.06);
+    renderAll();
+  }
+  function closeStage(id) {
+    var el = $("#stage-" + id);
+    if (el) el.classList.remove("on");
+    renderAll();
+  }
+
+  function renderAll() {
+    // 模块卡
+    $$("#mods .mod").forEach(function (b) {
+      var id = b.getAttribute("data-stage");
+      b.classList.toggle("done", !!S2[id]);
+      b.disabled = false;
+    });
+    // 进度条
+    var segs = $("#p2segs");
+    if (segs && !segs.children.length) {
+      for (var i = 0; i < P2_STAGES.length; i++) {
+        var s = document.createElement("div");
+        s.className = "seg";
+        s.setAttribute("data-seg", P2_STAGES[i]);
+        segs.appendChild(s);
+      }
+    }
+    var n = P2_STAGES.filter(function (k) { return !!S2[k]; }).length;
+    $$("#p2segs .seg").forEach(function (s) {
+      s.classList.toggle("done", !!S2[s.getAttribute("data-seg")]);
+    });
+    var prog = $("#p2prog");
+    if (prog) prog.textContent = n + " / " + P2_STAGES.length;
+  }
+
+  /* ============================================================
+     开机自检
+     ============================================================ */
+  var P2_BOOT = [
+    "WQFWS BIOS v2.0 ...................... OK",
+    "MOUNTING /secret/level-0 ............. OK",
+    "CHECKING SECOND RUN FLAG ............. OK",
+    "LOADING MODULE P2-01 /isolation ...... READY",
+    "LOADING MODULE P2-02 /noise .......... STANDBY",
+    "LOADING MODULE P2-03 /lights ......... STANDBY",
+    "LOADING MODULE P2-04 /redroom ........ STANDBY",
+    "",
+    "WELCOME BACK · 第二趟",
+    ""
+  ];
+  var bootEl = null, bootText = null, booted = false;
+
+  function finishBoot() {
+    if (booted) return;
+    booted = true;
+    if (bootEl) {
+      bootEl.classList.add("done");
+      setTimeout(function () { bootEl.style.display = "none"; }, 500);
+    }
+  }
+  function typeBoot() {
+    if (!bootText) { finishBoot(); return; }
+    var li = 0, ci = 0, text = "";
+    function step() {
+      if (booted) return;
+      if (li >= P2_BOOT.length) { setTimeout(finishBoot, 380); return; }
+      var line = P2_BOOT[li];
+      if (ci < line.length) {
+        text += line.charAt(ci); ci++;
+        bootText.textContent = text;
+        setTimeout(step, 5 + Math.random() * 7);
+      } else {
+        text += "\n"; bootText.textContent = text;
+        li++; ci = 0;
+        setTimeout(step, 80);
+      }
+    }
+    step();
+  }
+  function armSkipBoot() {
+    document.addEventListener("pointerdown", function () {
+      if (!booted) { if (bootText) bootText.textContent = P2_BOOT.join("\n"); finishBoot(); }
+    }, { once: true });
+    document.addEventListener("keydown", function () { if (!booted) finishBoot(); }, { once: true });
+  }
+
+  /* ============================================================
+     启动
+     ============================================================ */
+  load();
+  logEl = $("#log");
+  bootEl = $("#boot");
+  bootText = $("#bootText");
+
+  var MAIN = mainProgress();
+
+  if (!MAIN.unlocked) {
+    // 门槛未过：显示锁定屏，不启动
+    var lk = $("#lock");
+    if (lk) lk.classList.add("show");
+    var lc = $("#lockCount");
+    if (lc) lc.textContent = MAIN.doneCount + " / 11";
+    var lf = $("#lockFrags");
+    if (lf) lf.textContent = MAIN.frags + " / 10";
+    var lfin = $("#lockFinal");
+    if (lfin) lfin.textContent = MAIN.raw.final ? "已达成" : "未达成";
+    if (bootEl) bootEl.style.display = "none";
+  } else {
+    var lk2 = $("#lock");
+    if (lk2) lk2.style.display = "none";
+
+    renderAll();
+
+    print("检测到主线存档：十一个模块全部完成。", "ok");
+    print("第二趟已解锁。这一趟没有出口 —— 只有那间房。", "warn");
+    print("");
+
+    // 模块点击
+    $$("#mods .mod").forEach(function (b) {
+      b.addEventListener("click", function () { openStage(b.getAttribute("data-stage")); });
+    });
+    // 关闭按钮
+    $$("[data-close]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var st = b.closest(".stage");
+        if (st) st.classList.remove("on");
+        renderAll();
+      });
+    });
+    // 各关按钮
+    var ng = $("#noiseGo");
+    if (ng) ng.addEventListener("click", noiseSubmit);
+    var lh = $("#lzHide");
+    if (lh) lh.addEventListener("click", function () {
+      if (S2.lights || lzDark) return;
+      lzDark = true; lzStep = 0;
+      lzRender();
+      var out = $("#lzOut");
+      if (out) out.innerHTML = "灯灭了。四周死一般寂静 —— 按顺序点出刚才那 " + LZ_LEN + " 格。";
+      beep(300, 0.16, "sine", 0.04);
+    });
+    var lr = $("#lzRetry");
+    if (lr) lr.addEventListener("click", function () {
+      if (S2.lights) return;
+      lzGen(); lzBuild(); lzRender();
+      var out = $("#lzOut");
+      if (out) out.textContent = "重新亮灯 —— 记住新的顺序。";
+      beep(520, 0.08);
+    });
+    var rg = $("#rrGo");
+    if (rg) rg.addEventListener("click", roomsSubmit);
+
+    // 时钟
+    var clockEl = $("#clock");
+    function tickClock() {
+      if (!clockEl) return;
+      var d = new Date();
+      var p = function (x) { return String(x).length < 2 ? "0" + x : String(x); };
+      clockEl.textContent = p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+    }
+    tickClock();
+    setInterval(tickClock, 1000);
+
+    armSkipBoot();
+    typeBoot();
+
+    // 已经通关过：给一个重看隐藏结局的常驻入口
+    var ea = $("#endAgain");
+    if (ea && S2.done) {
+      ea.style.display = "";
+      ea.addEventListener("click", openEnding);
+    }
+
+    // 已通关过就在日志里说一声
+    if (S2.done) {
+      print("");
+      print("你已经走完过第二趟。底部「◈ 再看隐藏结局」可以重看。", "dim");
+    }
+  }
+
+  // 关卡完成后重看结局：redroom 完成即触发，这里补一个手动入口
+  window.addEventListener("keydown", function (e) {
+    if (!MAIN.unlocked) return;
+    if (e.key === "Escape") {
+      $$(".stage.on").forEach(function (s) { s.classList.remove("on"); });
+      renderAll();
+    }
+  });
+})();
+</script>
+</body>
+</html>
