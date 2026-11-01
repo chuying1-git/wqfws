@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#05070a" />
+<meta name="description" content="WQFWS // 宜居地带 · 第三趟" />
+<meta name="robots" content="noindex" />
+<title>WQFWS // 宜居地带 · 第三趟</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%2305070a'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='%239fb8d9' font-family='monospace'%3E3_%3C/text%3E%3C/svg%3E" />
+
+<!--
+  第三趟 · 宜居地带
+  ---------------------------------------------------------------
+  wqfws ARG 的第三个入口，和 index.html / phase2.html 同源，共用 localStorage：
+    · 读 wqfws-p2 的 .done 判断第二趟是否走完（门槛）
+    · 自己写 wqfws-p3
+  设定照 The Backrooms 维基「Level 1 - 宜居地带」：
+    非欧几何 / 区段 / 小径 / 板条箱 / 闪烁 / 实体 / M.E.G. 等团体。
+  和第一、二趟一样：单文件、零依赖、无图片。
+-->
+<style>
+  :root {
+    /* 第三趟用钢灰蓝 —— Level 1 的混凝土与荧光灯 */
+    --g: #9fb8d9;
+    --g-bright: #e6f0fa;
+    --g-dim: rgba(159, 184, 217, 0.58);
+    --g-faint: rgba(159, 184, 217, 0.16);
+    --green: #58ff9f;
+    --red: #ff7b7b;
+    --amber: #ffd27d;
+    --bg: #05070a;
+    --mono: "Cascadia Mono", "Consolas", "SFMono-Regular", "Menlo", "Courier New", monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background:
+      radial-gradient(900px 600px at 50% -10%, rgba(159, 184, 217, 0.10), transparent 62%),
+      radial-gradient(700px 520px at 50% 112%, rgba(88, 255, 159, 0.05), transparent 60%),
+      var(--bg);
+    color: var(--g);
+    font-family: var(--mono);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: rgba(159, 184, 217, 0.26); color: #f2f8ff; }
+
+  .screen {
+    position: relative;
+    width: min(1080px, 100%);
+    height: min(880px, calc(100dvh - 48px));
+    border: 1px solid rgba(159, 184, 217, 0.22);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(159, 184, 217, 0.035), rgba(5, 7, 10, 0.92));
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.72), 0 0 0 1px rgba(159, 184, 217, 0.05) inset;
+    overflow: hidden;
+    animation: screenIn 0.7s ease;
+  }
+  @keyframes screenIn { from { opacity: 0; transform: scale(0.985); } }
+
+  .scanlines {
+    position: absolute; inset: 0; z-index: 5; pointer-events: none;
+    background: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,0.16) 2px 4px);
+    mix-blend-mode: multiply;
+  }
+  .sweep {
+    position: absolute; left: 0; right: 0; height: 140px; z-index: 6; pointer-events: none;
+    background: linear-gradient(180deg, transparent, rgba(159,184,217,0.05), transparent);
+    animation: sweep 7s linear infinite;
+  }
+  @keyframes sweep { 0% { top: -140px; } 100% { top: 100%; } }
+
+  .content {
+    position: relative; z-index: 2;
+    height: 100%; overflow-y: auto;
+    padding: 24px 26px 30px;
+  }
+  .content::-webkit-scrollbar { width: 8px; }
+  .content::-webkit-scrollbar-thumb { background: rgba(159,184,217,0.2); border-radius: 4px; }
+
+  .topline {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 10px; letter-spacing: 0.16em;
+    color: var(--g-dim); text-transform: uppercase;
+    padding-bottom: 12px; border-bottom: 1px solid var(--g-faint);
+  }
+  .topline .grow { flex: 1; }
+  .topline .status { display: flex; align-items: center; gap: 7px; }
+  .topline .status i {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px rgba(88, 255, 159, 0.7);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+  h1 {
+    margin: 14px 0 4px; font-size: 17px; letter-spacing: 0.14em;
+    color: var(--g-bright); font-weight: 600;
+  }
+  .sub { margin: 0; font-size: 11px; color: var(--g-dim); letter-spacing: 0.05em; }
+
+  .p3bar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    margin: 18px 0 0; font-size: 10px; letter-spacing: 0.14em;
+    color: var(--g-dim);
+  }
+  .p3segs { display: flex; gap: 4px; flex: 1; min-width: 180px; }
+  .seg {
+    flex: 1; height: 6px; border-radius: 3px;
+    background: var(--g-faint);
+    transition: background 0.4s, box-shadow 0.4s;
+  }
+  .seg.done { background: var(--g); border-color: var(--g); box-shadow: 0 0 12px rgba(159, 184, 217, 0.55); }
+
+  .nextbox {
+    display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
+    margin: 0 0 17px; padding: 11px 14px;
+    border: 1px dashed rgba(159, 184, 217, 0.28); border-radius: 10px;
+    background: rgba(159, 184, 217, 0.035);
+    font-size: 11.5px; color: var(--g-dim);
+  }
+  .nextbox .nx-lab { font-size: 10px; letter-spacing: 0.16em; color: rgba(159, 184, 217, 0.42); }
+  .nextbox .nx-name { font-size: 12.5px; color: var(--g-bright); }
+  .nextbox .nx-sp { flex: 1; }
+  .nextbox.allclear {
+    border-style: solid; border-color: rgba(88, 255, 159, 0.42);
+    background: rgba(88, 255, 159, 0.06);
+  }
+  .nextbox.allclear .nx-name { color: #d8ffe6; }
+
+  /* ============ 模块卡 ============ */
+  .mods {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px;
+    margin-bottom: 18px;
+  }
+  .mod {
+    position: relative; text-align: left;
+    background: rgba(159, 184, 217, 0.05);
+    border: 1px solid var(--g-faint); border-radius: 10px;
+    padding: 13px 14px 12px;
+    color: var(--g); font-family: var(--mono);
+    cursor: pointer; transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  }
+  .mod:hover { border-color: rgba(159,184,217,0.5); background: rgba(159,184,217,0.09); transform: translateY(-1px); }
+  .mod .no { font-size: 10px; letter-spacing: 0.2em; color: var(--g-dim); }
+  .mod .ttl { font-size: 14px; color: var(--g-bright); margin: 5px 0 3px; letter-spacing: 0.06em; }
+  .mod .dsc { font-size: 10.5px; color: var(--g-dim); line-height: 1.55; }
+  .mod.done { border-color: rgba(88, 255, 159, 0.45); }
+  .mod.done::after {
+    content: "✓"; position: absolute; top: 9px; right: 11px;
+    color: var(--green); font-size: 13px; text-shadow: 0 0 10px rgba(88,255,159,0.6);
+  }
+
+  /* ============ 关卡面板 ============ */
+  .stage { display: none; }
+  .stage.on { display: block; animation: stageIn 0.35s ease; }
+  @keyframes stageIn { from { opacity: 0; transform: translateY(10px); } }
+  .stage-card {
+    border: 1px solid rgba(159,184,217,0.3); border-radius: 12px;
+    background: linear-gradient(180deg, rgba(159,184,217,0.06), rgba(5,7,10,0.55));
+    overflow: hidden;
+  }
+  .stage-hd {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px; border-bottom: 1px solid var(--g-faint);
+    font-size: 11px; letter-spacing: 0.14em; color: var(--g-bright);
+  }
+  .stage-hd .grow { flex: 1; }
+  .stage-hd .prog { font-size: 10px; color: var(--g-dim); }
+  .stage-x {
+    width: 26px; height: 26px; border-radius: 7px; border: 1px solid var(--g-faint);
+    background: rgba(159,184,217,0.07); color: var(--g-dim);
+    cursor: pointer; font-family: var(--mono); font-size: 12px;
+  }
+  .stage-x:hover { color: var(--g-bright); border-color: rgba(159,184,217,0.5); }
+  .stage-bd { padding: 16px; font-size: 12.5px; line-height: 1.75; }
+  .stage-note {
+    border: 1px dashed var(--g-faint); border-radius: 10px;
+    padding: 11px 13px; margin: 0 0 14px; color: var(--g-dim); font-size: 11.5px; line-height: 1.7;
+    background: rgba(159,184,217,0.03);
+  }
+  .stage-note b { color: var(--g-bright); font-weight: 600; }
+  .stage-out { margin-top: 12px; font-size: 11.5px; min-height: 18px; color: var(--g-dim); }
+  .stage-out .ok2 { color: var(--green); }
+  .stage-out .er { color: var(--red); }
+  .stage-done {
+    display: none; margin-top: 14px; padding: 11px 14px;
+    border: 1px solid rgba(88, 255, 159, 0.4); border-radius: 10px;
+    background: rgba(88, 255, 159, 0.06); font-size: 12px; color: #d8ffe6;
+  }
+  .stage-done.on { display: block; animation: stageIn 0.4s ease; }
+
+  .btn {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.08em;
+    padding: 9px 16px; border-radius: 8px; cursor: pointer;
+    border: 1px solid rgba(159,184,217,0.4); background: rgba(159,184,217,0.12);
+    color: var(--g-bright); transition: all 0.15s;
+  }
+  .btn:hover:not(:disabled) { background: rgba(159,184,217,0.24); border-color: rgba(159,184,217,0.7); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.ghost { background: transparent; border-color: var(--g-faint); color: var(--g-dim); }
+  .btn.ghost:hover:not(:disabled) { color: var(--g-bright); border-color: rgba(159,184,217,0.5); background: rgba(159,184,217,0.07); }
+
+  .grid { display: grid; gap: 7px; }
+  .cell {
+    border: 1px solid var(--g-faint); border-radius: 8px;
+    min-height: 44px; display: flex; align-items: center; justify-content: center;
+    background: rgba(159,184,217,0.04); cursor: pointer;
+    font-family: var(--mono); font-size: 11px; color: var(--g-dim);
+    transition: border-color 0.15s, background 0.15s;
+    padding: 6px;
+  }
+  .cell:hover { border-color: rgba(159,184,217,0.55); }
+  .cell.right { border-color: var(--green); background: rgba(88,255,159,0.12); color: #d8ffe6; }
+  .cell.wrong { border-color: var(--red); background: rgba(255,123,123,0.12); color: #ffd7d7; }
+  .cell.sel { border-color: var(--amber); background: rgba(255,210,125,0.12); color: var(--amber); }
+
+  .card {
+    border: 1px solid var(--g-faint); border-radius: 10px;
+    background: rgba(159,184,217,0.05);
+    padding: 12px 13px; cursor: pointer; font-family: var(--mono);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .card:hover { border-color: rgba(159,184,217,0.5); }
+  .card .t { font-size: 12px; color: var(--g-bright); margin-bottom: 4px; letter-spacing: 0.04em; }
+  .card .d { font-size: 10.5px; color: var(--g-dim); line-height: 1.6; }
+  .card.sel { border-color: var(--amber); background: rgba(255,210,125,0.09); }
+  .card.right { border-color: var(--green); background: rgba(88,255,159,0.09); }
+  .card.wrong { border-color: var(--red); background: rgba(255,123,123,0.09); }
+
+  .tag {
+    display: inline-block; font-size: 9.5px; letter-spacing: 0.12em;
+    border: 1px solid var(--g-faint); border-radius: 5px; padding: 2px 7px;
+    color: var(--g-dim); margin-left: 6px; vertical-align: 1px;
+  }
+
+  /* ============ 闪烁关 ============ */
+  .flk-veil {
+    position: absolute; inset: 0; z-index: 40; pointer-events: none;
+    background: rgba(0,0,0,0.94);
+    opacity: 0; transition: opacity 0.6s;
+  }
+  .flk-veil.on { opacity: 1; }
+  .flk-lamp {
+    position: absolute; width: 5px; height: 5px; border-radius: 50%;
+    background: var(--green); box-shadow: 0 0 12px 3px rgba(88,255,159,0.75);
+    animation: lampBlink 3.1s ease-in-out infinite;
+  }
+  @keyframes lampBlink {
+    0%, 100% { opacity: 0.25; } 40% { opacity: 1; } 55% { opacity: 0.35; } 70% { opacity: 0.9; }
+  }
+
+  /* ============ 结局 ============ */
+  .end-bd { font-size: 13px; line-height: 2; color: var(--g); }
+  .end-bd .plain { display: block; margin-bottom: 2px; }
+  .end-bd .quote {
+    display: block; margin: 8px 0; padding: 9px 14px;
+    border-left: 3px solid var(--green); background: rgba(88,255,159,0.07);
+    color: #d8ffe6; font-style: italic;
+  }
+  .end-bd .sep { display: block; height: 14px; }
+  .end-link { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+  .end-link a {
+    font-size: 11px; letter-spacing: 0.08em; padding: 8px 13px;
+    border: 1px solid var(--g-faint); border-radius: 8px; color: var(--g-dim);
+    text-decoration: none; transition: all 0.15s;
+  }
+  .end-link a:hover { color: var(--g-bright); border-color: rgba(159,184,217,0.5); background: rgba(159,184,217,0.1); }
+
+  /* ============ 锁屏 ============ */
+  .lock {
+    position: fixed; inset: 0; z-index: 300; display: none;
+    place-items: center; background: rgba(3, 4, 6, 0.9);
+    backdrop-filter: blur(6px);
+  }
+  .lock.show { display: grid; }
+  .lock-box {
+    width: min(560px, 92%); border: 1px solid rgba(159,184,217,0.35); border-radius: 14px;
+    background: rgba(159,184,217,0.05); padding: 26px 28px;
+  }
+  .lock-box h2 { margin: 0 0 10px; font-size: 15px; letter-spacing: 0.12em; color: var(--g-bright); }
+  .lock-box p { margin: 0 0 8px; font-size: 12px; line-height: 1.8; color: var(--g-dim); }
+  .lock-box .nums { display: flex; gap: 14px; margin: 14px 0; font-size: 11px; color: var(--g-dim); }
+  .lock-box .nums b { color: var(--g-bright); }
+
+  /* ============ 开机自检 ============ */
+  #boot {
+    position: fixed; inset: 0; z-index: 400; display: grid; place-items: center;
+    background: rgba(3, 4, 6, 0.96); backdrop-filter: blur(4px);
+    font-size: 12px; letter-spacing: 0.08em; color: var(--g-dim);
+    transition: opacity 0.5s;
+  }
+  #boot.done { opacity: 0; pointer-events: none; }
+  #bootText { white-space: pre-wrap; width: min(520px, 80%); }
+  .boot-cursor { display: inline-block; width: 8px; background: var(--g); animation: pulse 0.9s steps(2) infinite; }
+
+  /* ============ 日志 ============ */
+  #log {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 8;
+    max-height: 26%; overflow-y: auto;
+    padding: 10px 26px 12px;
+    font-size: 10.5px; line-height: 1.7;
+    background: linear-gradient(180deg, transparent, rgba(5,7,10,0.94) 34%);
+    color: var(--g-dim);
+  }
+  #log .ln { white-space: pre-wrap; }
+  #log .ok { color: var(--green); }
+  #log .warn { color: var(--amber); }
+  #log .dim { opacity: 0.55; }
+  #log::-webkit-scrollbar { width: 6px; }
+  #log::-webkit-scrollbar-thumb { background: rgba(159,184,217,0.18); border-radius: 3px; }
+
+  /* ============ 页脚 ============ */
+  .footer {
+    position: relative; z-index: 9;
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 14px 2px 0; font-size: 10.5px; color: var(--g-dim);
+    border-top: 1px dashed var(--g-faint); margin-top: 18px;
+  }
+  .footer a { color: var(--g-dim); text-decoration: none; border-bottom: 1px dotted rgba(159,184,217,0.3); }
+  .footer a:hover { color: var(--g-bright); }
+  .footer .grow { flex: 1; }
+  .footer a[data-armed="1"] { color: var(--red); border-bottom-color: var(--red); }
+
+  /* ============ 响应式 ============ */
+  @media (max-width: 680px) {
+    .content { padding: 16px 14px 26px; }
+    .mods { grid-template-columns: repeat(2, 1fr); }
+    .cell { min-height: 38px; font-size: 10.5px; }
+  }
+
+  /* ============ 减少动态效果 ============ */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .flk-lamp { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+<div class="screen">
+  <div class="scanlines"></div>
+  <div class="sweep"></div>
+
+  <div class="content">
+    <div class="topline">
+      <span>WQFWS // LEVEL 1</span>
+      <span class="grow"></span>
+      <span class="status"><i></i><span id="clock">--:--</span></span>
+    </div>
+
+    <h1>WQFWS // 宜居地带 · 第三趟</h1>
+    <p class="sub">逃出了那个黄色地狱之后 —— 混凝土、立柱、管道间零星的金属撞击声。</p>
+
+    <div class="p3bar">
+      <span>进度</span>
+      <div class="p3segs" id="p3segs"></div>
+      <span id="p3prog">0 / 6</span>
+    </div>
+
+    <div class="nextbox" id="nextBox"></div>
+
+    <div class="mods" id="mods">
+      <button class="mod" data-stage="sector" type="button">
+        <span class="no">P3-01</span>
+        <span class="ttl">区段</span>
+        <span class="dsc">六个区段。你记得笔记写的是哪一段。</span>
+      </button>
+      <button class="mod" data-stage="nav" type="button">
+        <span class="no">P3-02</span>
+        <span class="ttl">小径入口</span>
+        <span class="dsc">灯灭了。找最近的绿色应急灯。</span>
+      </button>
+      <button class="mod" data-stage="crate" type="button">
+        <span class="no">P3-03</span>
+        <span class="ttl">板条箱</span>
+        <span class="dsc">资源唯一的来源。挑什么，不挑什么。</span>
+      </button>
+      <button class="mod" data-stage="flicker" type="button">
+        <span class="no">P3-04</span>
+        <span class="ttl">闪烁</span>
+        <span class="dsc">八条应对。只有一半是对的。</span>
+      </button>
+      <button class="mod" data-stage="entities" type="button">
+        <span class="no">P3-05</span>
+        <span class="ttl">实体</span>
+        <span class="dsc">五个遭遇。每个都只有一条正确应对。</span>
+      </button>
+      <button class="mod" data-stage="exit" type="button">
+        <span class="no">P3-06</span>
+        <span class="ttl">出口</span>
+        <span class="dsc">哪一条是「最常见」的那条。</span>
+      </button>
+    </div>
+
+    <!-- ============ 关卡面板 ============ -->
+
+    <!-- P3-01 区段 -->
+    <div class="stage" id="stage-sector">
+      <div class="stage-card">
+        <div class="stage-hd">
+          <span>📐 区段 · SECTOR</span>
+          <span class="grow"></span>
+          <span class="prog" id="secProg">待解</span>
+          <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+        </div>
+        <div class="stage-bd">
+          <div class="stage-note">
+            宜居地带被分成数个<b>区段</b>：天鹰段、跃金段、哥特段、衔尾段、花园段、传说段。
+            每段建筑不同。你口袋里那张速记写的是<b>天鹰段</b>—— 灰色墙面与地坪，巨型混凝土柱子，更像停车场。
+            三段环境速记里只有一段是你现在经历的。找出它。
+          </div>
+          <div class="grid" id="secLogs" style="grid-template-columns: repeat(3, 1fr);"></div>
+          <div class="stage-out" id="secOut">三段速记里，只有「天鹰段」和你口袋里的笔记对得上。</div>
+          <div class="stage-done" id="secDone">✓ 区段已确认 —— 天鹰段。M.E.G. 的 Alpha 基地就在这一段。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P3-02 小径入口 -->
+    <div class="stage" id="stage-nav">
+      <div class="stage-card">
+        <div class="stage-hd">
+          <span>🧭 小径入口 · CORRIDOR ENTRY</span>
+          <span class="grow"></span>
+          <span class="prog" id="navProg">0 / 1</span>
+          <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+        </div>
+        <div class="stage-bd">
+          <div class="stage-note">
+            <b>闪烁</b>开始了：整个层级陷入黑暗，实体在暗处猎捕。守则第一条：去最近的<b>小径</b>入口。
+            图上：S = 你，■ = 混凝土柱（不可走），<span style="color:var(--green)">◇ = 绿色应急灯（小径入口）</span>，F = 闪烁高危区（实体常出没，别绕进去）。
+            <b>非欧几何：你看到的距离是假的。</b> 感知上最近的那个入口可能最远。点出<b>真正最近</b>的那一个。
+          </div>
+          <div class="grid" id="navGrid" style="grid-template-columns: repeat(6, 1fr);"></div>
+          <div class="stage-out" id="navOut">感知距离不可信 —— 走几步试试，哪条路绕不进高危区。</div>
+          <div class="stage-done" id="navDone">✓ 你摸到了那盏绿应急灯。小径比过道安全。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P3-03 板条箱 -->
+    <div class="stage" id="stage-crate">
+      <div class="stage-card">
+        <div class="stage-hd">
+          <span>📦 板条箱 · CRATE</span>
+          <span class="grow"></span>
+          <span class="prog" id="crProg">0 / 4</span>
+          <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+        </div>
+        <div class="stage-bd">
+          <div class="stage-note">
+            你撬开了一只箱盖，八样东西。采集守则：<b>量力而行</b> —— 只拿确定有用的，别贪；
+            <b>避开危险</b> —— 碎玻璃、固态氮块这类东西别碰。
+            八样里<b>恰好有 4 样值得带走</b>。全部挑出来，一样不多，一样不少。
+          </div>
+          <div class="grid" id="crGrid" style="grid-template-columns: repeat(4, 1fr);"></div>
+          <div class="stage-out" id="crOut">点一下挑一件，再点一下放下。</div>
+          <div class="stage-actions" style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" id="crGo" type="button">封箱出发</button>
+            <button class="btn ghost" id="crClear" type="button">清空</button>
+          </div>
+          <div class="stage-done" id="crDone">✓ 封箱出发。背包里只有确定有用的东西。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P3-04 闪烁 -->
+    <div class="stage" id="stage-flicker">
+      <div class="stage-card">
+        <div class="stage-hd">
+          <span>⚡ 闪烁 · FLICKER</span>
+          <span class="grow"></span>
+          <span class="prog" id="flProg">0 / 4</span>
+          <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+        </div>
+        <div class="stage-bd" style="position:relative;">
+          <div class="flk-veil" id="flkVeil"></div>
+          <div class="stage-note">
+            闪烁期间，后室最致命的现象之一。八条应对里<b>恰好 4 条是对的</b>，4 条会要你的命。
+            勾选你认为正确的那 4 条。
+          </div>
+          <div class="grid" id="flGrid" style="grid-template-columns: repeat(2, 1fr);"></div>
+          <div class="stage-actions" style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" id="flGo" type="button">交卷</button>
+            <button class="btn ghost" id="flClear" type="button">清空</button>
+          </div>
+          <div class="stage-out" id="flOut">勾 4 条，交卷。</div>
+          <div class="stage-done" id="flDone">✓ 4 / 4。你记住了守则。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P3-05 实体 -->
+    <div class="stage" id="stage-entities">
+      <div class="stage-card">
+        <div class="stage-hd">
+          <span>👁 实体 · ENTITIES</span>
+          <span class="grow"></span>
+          <span class="prog" id="enProg">0 / 5</span>
+          <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+        </div>
+        <div class="stage-bd">
+          <div class="stage-note">
+            后室绝非只有地形。五种你已经在维基上见过的实体，各配一段遭遇和四条应对。
+            <b>每题只有一个正确答案</b>。答错的题可以重做，答对的不能撤回。
+          </div>
+          <div id="enBox"></div>
+          <div class="stage-out" id="enOut">先读遭遇，再挑应对。</div>
+          <div class="stage-done" id="enDone">✓ 五种实体，五种活法。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P3-06 出口 -->
+    <div class="stage" id="stage-exit">
+      <div class="stage-card">
+        <div class="stage-hd">
+          <span>🚪 出口 · EXIT</span>
+          <span class="grow"></span>
+          <span class="prog" id="exProg">待解</span>
+          <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+        </div>
+        <div class="stage-bd">
+          <div class="stage-note">
+            宜居地带最常见的出口通往下一个层级。四条候选里<b>只有 1 条是「最常见」的那条</b>。
+            另外三条虽然也能走通，但都不如它稳。
+          </div>
+          <div class="grid" id="exGrid" style="grid-template-columns: repeat(2, 1fr);"></div>
+          <div class="stage-out" id="exOut">维基原话：「最常见的出口」。</div>
+          <div class="stage-actions" style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" id="exGo" type="button">确认出口</button>
+          </div>
+          <div class="stage-done" id="exDone">✓ 你顺着管道与仪表板的方向走了很久。墙在变白。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 结局 -->
+    <div class="stage" id="stage-ending">
+      <div class="stage-card">
+        <div class="stage-hd">
+          <span>◈ 第三趟 · 隐藏结局</span>
+          <span class="grow"></span>
+          <button class="stage-x" data-close type="button" aria-label="关闭">✕</button>
+        </div>
+        <div class="stage-bd">
+          <div class="end-bd" id="endBd"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <a href="./index.html">← 回到第一趟</a>
+      <a href="./phase2.html">◈ 回到 Level 0</a>
+      <button class="btn ghost" id="p3Reset" type="button">重置第三趟</button>
+      <span class="grow"></span>
+      <span style="color:rgba(159,184,217,0.3)">设定依据 · The Backrooms 维基「Level 1 - 宜居地带」</span>
+    </div>
+  </div>
+
+  <div id="log" aria-live="polite"></div>
+
+  <!-- 锁屏 -->
+  <div class="lock" id="lock">
+    <div class="lock-box">
+      <h2>◈ 第三趟 · 锁着</h2>
+      <p>这里是 Level 1 的另一头。你还没走完第二趟。</p>
+      <p>回「阈界」把那六个模块做掉，门禁会自动解除。</p>
+      <div class="nums">
+        <span>第二趟进度 <b id="lockP2">? / 6</b></span>
+        <span>第二趟结局 <b id="lockDone">未看</b></span>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <a class="btn" href="./phase2.html">→ 先走第二趟</a>
+        <a class="btn ghost" href="./index.html">← 回到第一趟</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 开机自检 -->
+  <div id="boot"><span id="bootText"></span><span class="boot-cursor"></span></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============================================================
+     门槛：读 wqfws-p2，要求 .done === true
+     ============================================================ */
+  var P2_KEY = "wqfws-p2";
+  var P3_KEY = "wqfws-p3";
+
+  var P3_STAGES = ["sector", "nav", "crate", "flicker", "entities", "exit"];
+  var P3_TITLES = {
+    sector: "区段", nav: "小径入口", crate: "板条箱",
+    flicker: "闪烁", entities: "实体", exit: "出口"
+  };
+
+  var P2 = (function () {
+    try {
+      var raw = localStorage.getItem(P2_KEY);
+      if (!raw) return { unlocked: false, raw: null, doneCount: 0, hasDone: false };
+      var m = JSON.parse(raw);
+      if (!m || typeof m !== "object") return { unlocked: false, raw: raw, doneCount: 0, hasDone: false };
+      var doneCount = ["isolation","noise","lights","redroom","carpet","exit"].filter(function (k) { return !!m[k]; }).length;
+      return {
+        unlocked: !!m.done,
+        raw: raw,
+        doneCount: doneCount,
+        hasDone: !!m.done
+      };
+    } catch (e) {
+      return { unlocked: false, raw: null, doneCount: 0, hasDone: false };
+    }
+  })();
+
+  var P3 = (function () {
+    try {
+      var raw = localStorage.getItem(P3_KEY);
+      if (!raw) return {};
+      var m = JSON.parse(raw);
+      return (m && typeof m === "object") ? m : {};
+    } catch (e) { return {}; }
+  })();
+
+  var S3 = P3;
+  var UNLOCKED = P2.unlocked;
+
+  function save() {
+    try { localStorage.setItem(P3_KEY, JSON.stringify(S3)); } catch (e) {}
+  }
+
+  /* ============================================================
+     小工具：DOM / 音效 / 日志
+     ============================================================ */
+  function $(sel) { return document.querySelector(sel); }
+  function $$(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+
+  var AC = null;
+  function audio() {
+    if (AC === null) {
+      try { AC = new (window.AudioContext || window.webkitAudioContext)(); }
+      catch (e) { AC = false; }
+    }
+    return AC || false;
+  }
+  function beep(freq, dur, type, vol) {
+    var ctx = audio();
+    if (!ctx) return;
+    var o = ctx.createOscillator();
+    var g = ctx.createGain();
+    o.type = type || "sine";
+    o.frequency.value = freq;
+    g.gain.value = vol || 0.05;
+    o.connect(g); g.connect(ctx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + (dur || 0.1));
+    o.stop(ctx.currentTime + (dur || 0.1));
+  }
+
+  var logEl = $("#log");
+  function print(text, kind) {
+    if (!logEl) return;
+    var ln = document.createElement("div");
+    ln.className = "ln" + (kind ? " " + kind : "");
+    ln.textContent = text;
+    logEl.appendChild(ln);
+    while (logEl.children.length > 60) logEl.removeChild(logEl.firstChild);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+  function bigLine(text) {
+    print("", "dim");
+    print(text, "warn");
+  }
+
+  /* ============================================================
+     时钟
+     ============================================================ */
+  var clockEl = $("#clock");
+  function tickClock() {
+    if (!clockEl) return;
+    var d = new Date();
+    var p = function (x) { return String(x).length < 2 ? "0" + x : String(x); };
+    clockEl.textContent = p(d.getHours()) + ":" + p(d.getMinutes());
+  }
+  tickClock();
+  setInterval(tickClock, 15000);
+
+  /* ============================================================
+     P3-01 区段
+     ============================================================ */
+  var P3_SECTOR_LOGS = [
+    { t: "灰色墙面与地坪，巨型混凝土柱子。滴落到地面的水滴，并不适合安全饮用。", tag: "eagle" },
+    { t: "弯曲的建筑结构，拱门和圆柱。医疗队的旗帜挂在柱子之间。", tag: "gothic" },
+    { t: "霓虹与彩色电缆，朱漆木质的残影。过去与现在叠在同一堵墙上。", tag: "fable" }
+  ];
+  var P3_SECTOR_ANSWER = "eagle";
+
+  function sectorBuild() {
+    var box = $("#secLogs");
+    if (!box) return;
+    box.innerHTML = "";
+    P3_SECTOR_LOGS.forEach(function (l, i) {
+      var c = document.createElement("button");
+      c.type = "button";
+      c.className = "cell sec-log";
+      c.setAttribute("data-log", i);
+      c.style.minHeight = "96px";
+      c.style.alignItems = "flex-start";
+      c.style.textAlign = "left";
+      var tag = document.createElement("span");
+      tag.textContent = "速记 " + String.fromCharCode(65 + i);
+      tag.style.cssText = "display:block;font-size:10px;color:var(--g-dim);letter-spacing:0.14em;margin-bottom:6px;";
+      var body = document.createElement("span");
+      body.textContent = l.t;
+      body.style.cssText = "font-size:11px;line-height:1.6;color:var(--g);";
+      c.appendChild(tag); c.appendChild(body);
+      c.addEventListener("click", function () { sectorPick(i, c); });
+      box.appendChild(c);
+    });
+  }
+
+  function sectorPick(i, el) {
+    if (S3.sector) return;
+    var L = P3_SECTOR_LOGS[i];
+    if (L.tag === P3_SECTOR_ANSWER) {
+      S3.sector = true;
+      save();
+      el.classList.add("right");
+      $$("#secLogs .sec-log").forEach(function (o) { if (o !== el) o.style.opacity = "0.45"; });
+      var done = $("#secDone"); if (done) done.classList.add("on");
+      var pr = $("#secProg"); if (pr) pr.textContent = "已确认";
+      var out = $("#secOut"); if (out) out.innerHTML = '<span class="ok2">✓ 天鹰段。M.E.G. 的 Alpha 基地就在这一段。</span>';
+      print("区段：天鹰段。", "ok");
+      beep(660, 0.12); setTimeout(function () { beep(880, 0.14); }, 120);
+      setTimeout(function () { closeStage("sector"); openStage("nav"); }, 1900);
+    } else {
+      el.classList.add("wrong");
+      setTimeout(function () { el.classList.remove("wrong"); }, 700);
+      var out2 = $("#secOut");
+      if (out2) out2.innerHTML = '<span class="er">✗ 不对。再读一遍你口袋里的速记 —— 找<b>灰色墙面、混凝土柱、更像停车场</b>的那段。</span>';
+      print("区段：不是这一段。", "warn");
+      beep(200, 0.12, "square", 0.04);
+    }
+  }
+
+  /* ============================================================
+     P3-02 小径入口（非欧几何 + BFS）
+     ============================================================ */
+  // 6 列 × 5 行。S 起点，P 混凝土柱，G 应急灯（小径入口），F 高危区，. 空地
+  // 设计：感知上最近的 G 其实绕路最远；BFS 最近的那个要绕开柱子。
+  var P3_NAV_W = 6, P3_NAV_H = 5;
+  var P3_NAV_MAP = [
+    "....G.",
+    ".F..P.",
+    "S.F..G",
+    ".P.F..",
+    "..P.G."
+  ];
+  var P3_NAV_ANSWER = (function () {
+    // 独立 BFS 求出「真正最近」的应急灯坐标
+    var S = [2, 0];
+    var dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+    var dist = {};
+    var q = [S];
+    dist[S[0] + "," + S[1]] = 0;
+    var found = null;
+    while (q.length) {
+      var cur = q.shift();
+      var d = dist[cur.join(",")];
+      for (var i = 0; i < 4; i++) {
+        var r = cur[0] + dirs[i][0], c = cur[1] + dirs[i][1];
+        var key = r + "," + c;
+        if (r < 0 || r >= P3_NAV_H || c < 0 || c >= P3_NAV_W) continue;
+        var ch = P3_NAV_MAP[r][c];
+        if (ch === "P" || ch === "F") continue;
+        if (dist[key] !== undefined) continue;
+        dist[key] = d + 1;
+        if (ch === "G") { if (!found || d + 1 < found.d) found = { r: r, c: c, d: d + 1 }; }
+        q.push([r, c]);
+      }
+    }
+    return found ? { r: found.r, c: found.c, d: found.d } : null;
+  })();
+
+  var navSel = null;
+  function navBuild() {
+    var g = $("#navGrid");
+    if (!g) return;
+    g.innerHTML = "";
+    for (var r = 0; r < P3_NAV_H; r++) {
+      for (var c = 0; c < P3_NAV_W; c++) {
+        var ch = P3_NAV_MAP[r][c];
+        var cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "cell nav-cell";
+        cell.setAttribute("data-cell", r * P3_NAV_W + c);
+        cell.setAttribute("data-ch", ch);
+        if (ch === "S") {
+          cell.textContent = "S";
+          cell.style.color = "var(--g-bright)";
+          cell.style.background = "rgba(159,184,217,0.18)";
+          cell.disabled = true;
+        } else if (ch === "P") {
+          cell.textContent = "■";
+          cell.style.opacity = "0.55";
+          cell.disabled = true;
+        } else if (ch === "F") {
+          cell.textContent = "F";
+          cell.style.color = "var(--red)";
+          cell.style.background = "rgba(255,123,123,0.07)";
+        } else if (ch === "G") {
+          cell.textContent = "◇";
+          cell.style.color = "var(--green)";
+          cell.style.background = "rgba(88,255,159,0.08)";
+          cell.addEventListener("click", (function (rr, cc) {
+            return function () { navGuess(rr, cc, this); };
+          })(r, c));
+        } else {
+          cell.textContent = "·";
+          cell.style.opacity = "0.4";
+          cell.disabled = true;
+        }
+        g.appendChild(cell);
+      }
+    }
+  }
+
+  function navGuess(r, c, el) {
+    if (S3.nav) return;
+    var ans = P3_NAV_ANSWER;
+    if (ans && r === ans.r && c === ans.c) {
+      S3.nav = true;
+      save();
+      el.classList.add("right");
+      var done = $("#navDone"); if (done) done.classList.add("on");
+      var pr = $("#navProg"); if (pr) pr.textContent = "1 / 1";
+      var out = $("#navOut"); if (out) out.innerHTML = '<span class="ok2">✓ 你摸到了那盏绿应急灯。小径比过道安全。</span>';
+      print("小径入口：BFS " + ans.d + " 步，最近。", "ok");
+      beep(660, 0.12); setTimeout(function () { beep(990, 0.16); }, 130);
+      setTimeout(function () { closeStage("nav"); openStage("crate"); }, 1900);
+    } else {
+      el.classList.add("wrong");
+      setTimeout(function () { el.classList.remove("wrong"); }, 700);
+      var out2 = $("#navOut");
+      if (out2) out2.innerHTML = '<span class="er">✗ 这是感知上最近的那个 —— 但非欧几何不会放过你。再想想哪条路<b>真的</b>最短。</span>';
+      print("小径入口：这一盏绕得太远。", "warn");
+      beep(200, 0.12, "square", 0.04);
+    }
+  }
+
+  /* ============================================================
+     P3-03 板条箱
+     ============================================================ */
+  var P3_CRATE_ITEMS = [
+    { id: "almond",  t: "杏仁水",        d: "你会在后室发现的主要饮品。", take: true },
+    { id: "can",     t: "罐装食物",      d: "避免任何污染 / 变质风险。", take: true },
+    { id: "bandage", t: "绷带（或纱布）", d: "以防受伤。",               take: true },
+    { id: "match",   t: "火柴",          d: "点火工具，木板可作燃料。",  take: true },
+    { id: "glass",   t: "碎玻璃",        d: "开启时保持警惕。",          take: false },
+    { id: "nitro",   t: "固态氮块",      d: "特殊物件。",               take: false },
+    { id: "chem",    t: "化学制剂",      d: "暗藏危险。",               take: false },
+    { id: "rat",     t: "死老鼠",        d: "多数补给要么变质要么污染。", take: false }
+  ];
+  var P3_CRATE_TAKE = P3_CRATE_ITEMS.filter(function (i) { return i.take; }).map(function (i) { return i.id; });
+
+  var crateSel = [];
+  function crateBuild() {
+    var box = $("#crGrid");
+    if (!box) return;
+    box.innerHTML = "";
+    crateSel = S3.crate ? P3_CRATE_TAKE.slice() : [];
+    P3_CRATE_ITEMS.forEach(function (it) {
+      var c = document.createElement("button");
+      c.type = "button";
+      c.className = "card cr-item";
+      c.setAttribute("data-item", it.id);
+      var t = document.createElement("div"); t.className = "t"; t.textContent = it.t;
+      var d = document.createElement("div"); d.className = "d"; d.textContent = it.d;
+      c.appendChild(t); c.appendChild(d);
+      c.addEventListener("click", function () { crateToggle(it.id, c); });
+      box.appendChild(c);
+    });
+    crateRender();
+  }
+
+  function crateToggle(id, el) {
+    if (S3.crate) return;
+    var i = crateSel.indexOf(id);
+    if (i >= 0) crateSel.splice(i, 1);
+    else crateSel.push(id);
+    crateRender();
+    beep(440, 0.05);
+  }
+
+  function crateRender() {
+    var pr = $("#crProg");
+    if (pr) pr.textContent = crateSel.length + " / " + P3_CRATE_TAKE.length;
+    P3_CRATE_ITEMS.forEach(function (it) {
+      var el = $('#crGrid .cr-item[data-item="' + it.id + '"]');
+      if (!el) return;
+      if (crateSel.indexOf(it.id) >= 0) el.classList.add("sel");
+      else el.classList.remove("sel");
+    });
+  }
+
+  function crateSubmit() {
+    if (S3.crate) return;
+    var selSet = crateSel.slice().sort();
+    var ansSet = P3_CRATE_TAKE.slice().sort();
+    var same = selSet.length === ansSet.length && selSet.every(function (v, i) { return v === ansSet[i]; });
+    var out = $("#crOut");
+    if (same) {
+      S3.crate = true;
+      save();
+      $$("#crGrid .cr-item").forEach(function (c) {
+        if (P3_CRATE_TAKE.indexOf(c.getAttribute("data-item")) >= 0) c.classList.add("right");
+        else c.classList.add("wrong");
+      });
+      var done = $("#crDone"); if (done) done.classList.add("on");
+      if (out) out.innerHTML = '<span class="ok2">✓ 封箱出发。背包里只有确定有用的东西。</span>';
+      print("板条箱：4 / 4 正确。", "ok");
+      beep(660, 0.12); setTimeout(function () { beep(990, 0.16); }, 130);
+      setTimeout(function () { closeStage("crate"); openStage("flicker"); }, 1900);
+    } else {
+      var wrong = crateSel.filter(function (id) { return P3_CRATE_TAKE.indexOf(id) < 0; });
+      var miss  = P3_CRATE_TAKE.filter(function (id) { return crateSel.indexOf(id) < 0; });
+      if (out) out.innerHTML = '<span class="er">✗ 不对 —— 你多拿了 ' + wrong.length + ' 样，漏了 ' + miss.length + ' 样。重新挑。</span>';
+      print("板条箱：" + wrong.length + " 样危险，" + miss.length + " 样漏了。", "warn");
+      beep(200, 0.12, "square", 0.04);
+      $$("#crGrid .cr-item").forEach(function (c) { c.classList.remove("wrong", "right"); });
+      crateSel = [];
+      crateRender();
+    }
+  }
+
+  /* ============================================================
+     P3-04 闪烁（8 条应对，勾 4 条）
+     ============================================================ */
+  var P3_FLICKER_OPTS = [
+    { id: "f1", t: "朝最近的绿色应急灯标志走",                          ok: true  },
+    { id: "f2", t: "在过道里点亮手电照向黑暗",                          ok: false },
+    { id: "f3", t: "找到入口后，在小径里可以使用照明工具",              ok: true  },
+    { id: "f4", t: "奔跑逃离这片黑暗",                                  ok: false },
+    { id: "f5", t: "躲在柱子或板条箱后，直到听见它们离开的动静",        ok: true  },
+    { id: "f6", t: "朝黑暗深处探索，看看发生了什么",                    ok: false },
+    { id: "f7", t: "不发出太大声响 —— 大多数实体经过演化，再弱的声音也能听见", ok: true },
+    { id: "f8", t: "开火驱赶附近可见的实体",                            ok: false }
+  ];
+  var P3_FLICKER_ANSWER = P3_FLICKER_OPTS.filter(function (o) { return o.ok; }).map(function (o) { return o.id; });
+
+  var flSel = [];
+  function flickerBuild() {
+    var box = $("#flGrid");
+    if (!box) return;
+    box.innerHTML = "";
+    flSel = S3.flicker ? P3_FLICKER_ANSWER.slice() : [];
+    P3_FLICKER_OPTS.forEach(function (o) {
+      var c = document.createElement("button");
+      c.type = "button";
+      c.className = "card fl-opt";
+      c.setAttribute("data-opt", o.id);
+      var t = document.createElement("div"); t.className = "t"; t.textContent = o.t;
+      c.appendChild(t);
+      c.addEventListener("click", function () { flToggle(o.id, c); });
+      box.appendChild(c);
+    });
+    flRender();
+  }
+
+  function flToggle(id, el) {
+    if (S3.flicker) return;
+    var i = flSel.indexOf(id);
+    if (i >= 0) flSel.splice(i, 1); else flSel.push(id);
+    flRender();
+    beep(440, 0.05);
+  }
+
+  function flRender() {
+    var pr = $("#flProg");
+    if (pr) pr.textContent = flSel.length + " / " + P3_FLICKER_ANSWER.length;
+    P3_FLICKER_OPTS.forEach(function (o) {
+      var el = $('#flGrid .fl-opt[data-opt="' + o.id + '"]');
+      if (!el) return;
+      if (flSel.indexOf(o.id) >= 0) el.classList.add("sel");
+      else el.classList.remove("sel");
+    });
+  }
+
+  function flSubmit() {
+    if (S3.flicker) return;
+    var selSet = flSel.slice().sort();
+    var ansSet = P3_FLICKER_ANSWER.slice().sort();
+    var same = selSet.length === ansSet.length && selSet.every(function (v, i) { return v === ansSet[i]; });
+    var out = $("#flOut");
+    if (same) {
+      S3.flicker = true;
+      save();
+      $$("#flGrid .fl-opt").forEach(function (c) {
+        var id = c.getAttribute("data-opt");
+        if (P3_FLICKER_ANSWER.indexOf(id) >= 0) c.classList.add("right");
+        else c.classList.add("wrong");
+      });
+      var done = $("#flDone"); if (done) done.classList.add("on");
+      var veil = $("#flkVeil");
+      if (veil) {
+        veil.classList.add("on");
+        setTimeout(function () {
+          for (var i = 0; i < 3; i++) {
+            var lamp = document.createElement("div");
+            lamp.className = "flk-lamp";
+            lamp.style.left = (20 + Math.random() * 60) + "%";
+            lamp.style.top = (15 + Math.random() * 70) + "%";
+            lamp.style.animationDelay = (i * 0.4) + "s";
+            veil.appendChild(lamp);
+          }
+        }, 300);
+        setTimeout(function () { veil.classList.remove("on"); veil.innerHTML = ""; }, 4200);
+      }
+      if (out) out.innerHTML = '<span class="ok2">✓ 4 / 4。你记住了守则 —— 黑暗里，安静地走。</span>';
+      print("闪烁：4 / 4 正确。", "ok");
+      beep(660, 0.12); setTimeout(function () { beep(990, 0.16); }, 130);
+      setTimeout(function () { closeStage("flicker"); openStage("entities"); }, 2200);
+    } else {
+      var miss = P3_FLICKER_ANSWER.filter(function (id) { return flSel.indexOf(id) < 0; });
+      var extra = flSel.filter(function (id) { return P3_FLICKER_ANSWER.indexOf(id) < 0; });
+      if (out) out.innerHTML = '<span class="er">✗ 漏了 ' + miss.length + ' 条对的，多勾了 ' + extra.length + ' 条错的。再想想。</span>';
+      print("闪烁：" + miss.length + " 条漏了，" + extra.length + " 条多勾。", "warn");
+      beep(200, 0.12, "square", 0.04);
+      flSel = [];
+      flRender();
+    }
+  }
+
+  /* ============================================================
+     P3-05 实体（5 题单选）
+     ============================================================ */
+  var P3_ENTITIES = [
+    {
+      name: "钝人", meet: "你听到附近出现刺耳声 / 沙沙声。",
+      opts: [
+        "远离墙壁 —— 它会从墙里切行出来突袭",
+        "用强光照射它",
+        "朝它大喊，逼它现身",
+        "站在原地不动"
+      ],
+      a: 0
+    },
+    {
+      name: "肢团", meet: "地板下传来一堆肢体高速移动的声音。",
+      opts: [
+        "打开手电照向它们",
+        "保持安静 —— 它们没有视觉，靠声音定位",
+        "朝它们跑",
+        "扔一块重物砸过去"
+      ],
+      a: 1
+    },
+    {
+      name: "笑魇", meet: "你看到一张发光的兽面在黑暗里微笑。",
+      opts: [
+        "朝它扔一块肉当诱饵",
+        "用手电照住它",
+        "绕过去走",
+        "大喊驱赶"
+      ],
+      a: 0
+    },
+    {
+      name: "窃皮者", meet: "一个穿人皮的东西朝你走来，开口说：「有人吗？」",
+      opts: [
+        "立刻开火",
+        "和它对话 —— 它智力低下；确认它不是人后，冷静地远离",
+        "拥抱它",
+        "转身逃跑"
+      ],
+      a: 1
+    },
+    {
+      name: "悲尸", meet: "一个不死的人形生物朝你走来，说着你能听懂的话：「帮帮我。」",
+      opts: [
+        "帮它 —— 它说的是人话",
+        "听懂了也不能互动 —— 这些生物并非人类",
+        "用强光照射",
+        "朝它扔食物"
+      ],
+      a: 1
+    }
+  ];
+
+  var enAnswered = {};
+  function entitiesBuild() {
+    var box = $("#enBox");
+    if (!box) return;
+    box.innerHTML = "";
+    enAnswered = {};
+    P3_ENTITIES.forEach(function (e, qi) {
+      var wrap = document.createElement("div");
+      wrap.style.marginBottom = "14px";
+      wrap.style.border = "1px solid var(--g-faint)";
+      wrap.style.borderRadius = "10px";
+      wrap.style.padding = "12px 14px";
+      var head = document.createElement("div");
+      head.style.cssText = "font-size:12px;color:var(--g-bright);margin-bottom:6px;letter-spacing:0.05em;";
+      head.textContent = (qi + 1) + ". " + e.name;
+      var meet = document.createElement("div");
+      meet.style.cssText = "font-size:11px;color:var(--g-dim);margin-bottom:10px;line-height:1.6;";
+      meet.textContent = e.meet;
+      wrap.appendChild(head); wrap.appendChild(meet);
+      var opts = document.createElement("div");
+      opts.style.cssText = "display:grid;grid-template-columns:1fr 1fr;gap:7px;";
+      e.opts.forEach(function (o, oi) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "card en-opt";
+        b.setAttribute("data-q", qi);
+        b.setAttribute("data-o", oi);
+        b.style.minHeight = "44px";
+        b.style.alignItems = "flex-start";
+        b.style.textAlign = "left";
+        var span = document.createElement("span");
+        span.style.cssText = "font-size:11px;line-height:1.5;color:var(--g);";
+        span.textContent = o;
+        b.appendChild(span);
+        b.addEventListener("click", function () { entitiesPick(qi, oi, b); });
+        opts.appendChild(b);
+      });
+      wrap.appendChild(opts);
+      box.appendChild(wrap);
+    });
+    entitiesRender();
+  }
+
+  function entitiesPick(qi, oi, el) {
+    if (S3.entities) return;
+    var e = P3_ENTITIES[qi];
+    if (enAnswered[qi] !== undefined) return;
+    enAnswered[qi] = oi;
+    if (oi === e.a) {
+      el.classList.add("right");
+      $$('#enBox .en-opt[data-q="' + qi + '"]').forEach(function (o) { if (o !== el) o.style.opacity = "0.4"; });
+      print("实体 " + (qi + 1) + "/" + P3_ENTITIES.length + "：对。", "ok");
+      beep(660, 0.08);
+    } else {
+      el.classList.add("wrong");
+      setTimeout(function () { el.classList.remove("wrong"); el.style.opacity = ""; }, 800);
+      enAnswered[qi] = undefined;
+      print("实体 " + (qi + 1) + "：不对。再想想。", "warn");
+      beep(200, 0.1, "square", 0.04);
+    }
+    entitiesRender();
+    var n = Object.keys(enAnswered).filter(function (k) { return enAnswered[k] === P3_ENTITIES[+k].a; }).length;
+    if (n === P3_ENTITIES.length) entitiesWin();
+  }
+
+  function entitiesRender() {
+    var n = P3_ENTITIES.length;
+    var pr = $("#enProg");
+    if (pr) pr.textContent = "0 / " + n;
+    P3_ENTITIES.forEach(function (e, qi) {
+      var ans = enAnswered[qi];
+      var wrap = $$('#enBox .card, #enBox > div').filter(function (el) {
+        return el.querySelector && el.querySelector('.en-opt[data-q="' + qi + '"]');
+      })[0];
+      if (!wrap) return;
+      if (ans !== undefined) {
+        wrap.style.borderColor = "rgba(88,255,159,0.45)";
+        wrap.style.background = "rgba(88,255,159,0.05)";
+      }
+    });
+    var solved = P3_ENTITIES.filter(function (e, qi) { return enAnswered[qi] === e.a; }).length;
+    if (pr) pr.textContent = solved + " / " + n;
+  }
+
+  function entitiesWin() {
+    S3.entities = true;
+    save();
+    var done = $("#enDone"); if (done) done.classList.add("on");
+    var out = $("#enOut"); if (out) out.innerHTML = '<span class="ok2">✓ 五种实体，五种活法。</span>';
+    print("实体：5 / 5。", "ok");
+    beep(660, 0.12); setTimeout(function () { beep(990, 0.16); }, 130);
+    setTimeout(function () { closeStage("entities"); openStage("exit"); }, 1900);
+  }
+
+  /* ============================================================
+     P3-06 出口（4 选 1）
+     ============================================================ */
+  var P3_EXIT_OPTS = [
+    { id: "x1", t: "玻璃门",              d: "通向 Level 22 颓垣。",                ok: false },
+    { id: "x2", t: "荧光灯走廊尽头，带独特符号的门", d: "通向 Level 154 激光游戏。", ok: false },
+    { id: "x3", t: "沿着管道与仪表板逐渐显现的方向移动", d: "最常见的出口，通向 Level 2 废弃公共带。", ok: true },
+    { id: "x4", t: "爬上天花板的洞",      d: "通向 Level 19 阁楼。",                ok: false }
+  ];
+  var P3_EXIT_ANSWER = (function () {
+    var hit = P3_EXIT_OPTS.filter(function (o) { return o.ok; });
+    return hit.length === 1 ? hit[0].id : null;
+  })();
+
+  var exSel = null;
+  function exitBuild() {
+    var box = $("#exGrid");
+    if (!box) return;
+    box.innerHTML = "";
+    exSel = null;
+    P3_EXIT_OPTS.forEach(function (o) {
+      var c = document.createElement("button");
+      c.type = "button";
+      c.className = "card ex-opt";
+      c.setAttribute("data-opt", o.id);
+      var t = document.createElement("div"); t.className = "t"; t.textContent = o.t;
+      var d = document.createElement("div"); d.className = "d"; d.textContent = o.d;
+      c.appendChild(t); c.appendChild(d);
+      c.addEventListener("click", function () {
+        exSel = o.id;
+        $$("#exGrid .ex-opt").forEach(function (o2) { o2.classList.remove("sel"); });
+        c.classList.add("sel");
+        beep(440, 0.05);
+      });
+      box.appendChild(c);
+    });
+  }
+
+  function exitPick(id, el) {
+    if (S3.exit) return;
+    if (id === P3_EXIT_ANSWER) {
+      S3.exit = true;
+      save();
+      el.classList.add("right");
+      $$("#exGrid .ex-opt").forEach(function (o) { if (o !== el) o.style.opacity = "0.45"; });
+      var done = $("#exDone"); if (done) done.classList.add("on");
+      var pr = $("#exProg"); if (pr) pr.textContent = "已确认";
+      var out = $("#exOut"); if (out) out.innerHTML = '<span class="ok2">✓ 你顺着管道与仪表板的方向走了很久。墙在变白。</span>';
+      print("出口：最常见的那条。", "ok");
+      beep(660, 0.12); setTimeout(function () { beep(990, 0.16); }, 130);
+      setTimeout(function () { closeStage("exit"); openEnding(); }, 2200);
+    } else {
+      el.classList.add("wrong");
+      setTimeout(function () { el.classList.remove("wrong"); }, 700);
+      var out2 = $("#exOut");
+      if (out2) out2.innerHTML = '<span class="er">✗ 这条也能走通，但不是「最常见」的那条。维基原话：「最常见的出口」。</span>';
+      print("出口：不是最常见的那条。", "warn");
+      beep(200, 0.12, "square", 0.04);
+    }
+  }
+
+  /* ============================================================
+     结局
+     ============================================================ */
+  var P3_ENDING = [
+    { t: "墙在变白。管道与仪表板不再密集，取而代之的是锈迹、铁丝网，和另一种低频的嗡鸣。" },
+    { t: "Level 2 · 废弃公共带。" },
+    { sep: true },
+    { t: "你站在后室第三段走廊的入口。三段走完：黄色地狱 → 宜居地带 → 废弃公共带。" },
+    { sep: true },
+    { t: "那张从第一趟带来的纸，边角被地毯的液体浸黄，现在被三趟的风干得硬邦邦。你把它翻过来，背面那半行水渍晕开的字，你现在全读得见了：" },
+    { t: "砥砺而行，天光终见。", q: true },
+    { sep: true },
+    { t: "从后室归来，二周年快乐。" },
+    { t: "第三趟结束。" }
+  ];
+
+  function renderEnding() {
+    var bd = $("#endBd");
+    if (!bd || bd.children.length) return;
+    P3_ENDING.forEach(function (row) {
+      var el = document.createElement("span");
+      if (row.sep) { el.className = "sep"; bd.appendChild(el); return; }
+      el.className = row.q ? "quote" : "plain";
+      el.textContent = row.t;
+      bd.appendChild(el);
+      bd.appendChild(document.createTextNode("\n"));
+    });
+    var link = document.createElement("div");
+    link.className = "end-link";
+    var a1 = document.createElement("a");
+    a1.href = "./index.html";
+    a1.textContent = "← 回到第一趟";
+    var a2 = document.createElement("a");
+    a2.href = "./phase2.html";
+    a2.textContent = "◈ 回到 Level 0";
+    var a3 = document.createElement("a");
+    a3.href = "#";
+    a3.setAttribute("data-replay", "1");
+    a3.textContent = "再看一遍";
+    a3.addEventListener("click", function (e) {
+      e.preventDefault();
+      bd.innerHTML = "";
+      renderEnding();
+    });
+    link.appendChild(a1); link.appendChild(a2); link.appendChild(a3);
+    bd.appendChild(link);
+  }
+
+  function openEnding() {
+    renderEnding();
+    var el = $("#stage-ending");
+    if (el) el.classList.add("on");
+    if (!S3.done) {
+      S3.done = true;
+      save();
+      bigLine("隐藏结局 :: 宜居地带");
+      print("第三趟结束。你走到了 Level 2。", "ok");
+      beep(660, 0.12);
+      setTimeout(function () { beep(880, 0.12); }, 130);
+      setTimeout(function () { beep(1320, 0.3); }, 270);
+    }
+    renderAll();
+  }
+
+  /* ============================================================
+     面板开关 / 总渲染
+     ============================================================ */
+  function restoreStage(id) {
+    var d, pr, out;
+    if (id === "sector" && S3.sector) {
+      d = $("#secDone"); if (d) d.classList.add("on");
+      pr = $("#secProg"); if (pr) pr.textContent = "已确认";
+      out = $("#secOut"); if (out) out.innerHTML = '<span class="ok2">✓ 天鹰段。M.E.G. 的 Alpha 基地就在这一段。</span>';
+      $$("#secLogs .sec-log").forEach(function (o, i) {
+        o.style.opacity = P3_SECTOR_LOGS[i].tag === P3_SECTOR_ANSWER ? "1" : "0.45";
+        if (P3_SECTOR_LOGS[i].tag === P3_SECTOR_ANSWER) o.classList.add("right");
+      });
+    }
+    if (id === "nav" && S3.nav) {
+      d = $("#navDone"); if (d) d.classList.add("on");
+      pr = $("#navProg"); if (pr) pr.textContent = "1 / 1";
+      out = $("#navOut"); if (out) out.innerHTML = '<span class="ok2">✓ 你摸到了那盏绿应急灯。</span>';
+      if (P3_NAV_ANSWER) {
+        var idx = P3_NAV_ANSWER.r * P3_NAV_W + P3_NAV_ANSWER.c;
+        var el = $('#navGrid .nav-cell[data-cell="' + idx + '"]');
+        if (el) el.classList.add("right");
+      }
+    }
+    if (id === "crate" && S3.crate) {
+      d = $("#crDone"); if (d) d.classList.add("on");
+      pr = $("#crProg"); if (pr) pr.textContent = "4 / 4";
+      out = $("#crOut"); if (out) out.innerHTML = '<span class="ok2">✓ 封箱出发。</span>';
+      $$("#crGrid .cr-item").forEach(function (c) {
+        var id = c.getAttribute("data-item");
+        c.classList.remove("sel");
+        if (P3_CRATE_TAKE.indexOf(id) >= 0) c.classList.add("right"); else c.classList.add("wrong");
+      });
+    }
+    if (id === "flicker" && S3.flicker) {
+      d = $("#flDone"); if (d) d.classList.add("on");
+      pr = $("#flProg"); if (pr) pr.textContent = "4 / 4";
+      out = $("#flOut"); if (out) out.innerHTML = '<span class="ok2">✓ 你记住了守则。</span>';
+      $$("#flGrid .fl-opt").forEach(function (c) {
+        var id = c.getAttribute("data-opt");
+        c.classList.remove("sel");
+        if (P3_FLICKER_ANSWER.indexOf(id) >= 0) c.classList.add("right"); else c.classList.add("wrong");
+      });
+    }
+    if (id === "entities" && S3.entities) {
+      d = $("#enDone"); if (d) d.classList.add("on");
+      pr = $("#enProg"); if (pr) pr.textContent = "5 / 5";
+      out = $("#enOut"); if (out) out.innerHTML = '<span class="ok2">✓ 五种实体，五种活法。</span>';
+      P3_ENTITIES.forEach(function (e, qi) {
+        var wrap = $$('#enBox > div').filter(function (el) {
+          return el.querySelector && el.querySelector('.en-opt[data-q="' + qi + '"]');
+        })[0];
+        if (wrap) {
+          wrap.style.borderColor = "rgba(88,255,159,0.45)";
+          wrap.style.background = "rgba(88,255,159,0.05)";
+        }
+      });
+    }
+    if (id === "exit" && S3.exit) {
+      d = $("#exDone"); if (d) d.classList.add("on");
+      pr = $("#exProg"); if (pr) pr.textContent = "已确认";
+      out = $("#exOut"); if (out) out.innerHTML = '<span class="ok2">✓ 你顺着管道与仪表板的方向走了很久。</span>';
+      var ael = $('#exGrid .ex-opt[data-opt="' + P3_EXIT_ANSWER + '"]');
+      if (ael) ael.classList.add("right");
+    }
+  }
+
+  function openStage(id) {
+    var el = $("#stage-" + id);
+    if (!el) return;
+    el.classList.add("on");
+    if (id === "sector") sectorBuild();
+    if (id === "nav") navBuild();
+    if (id === "crate") crateBuild();
+    if (id === "flicker") flickerBuild();
+    if (id === "entities") entitiesBuild();
+    if (id === "exit") exitBuild();
+    restoreStage(id);
+    beep(600, 0.06);
+    renderAll();
+  }
+  function closeStage(id) {
+    var el = $("#stage-" + id);
+    if (el) el.classList.remove("on");
+    renderAll();
+  }
+
+  function renderAll() {
+    $$("#mods .mod").forEach(function (b) {
+      var id = b.getAttribute("data-stage");
+      b.classList.toggle("done", !!S3[id]);
+      b.disabled = false;
+    });
+    var segs = $("#p3segs");
+    if (segs && !segs.children.length) {
+      for (var i = 0; i < P3_STAGES.length; i++) {
+        var s = document.createElement("div");
+        s.className = "seg";
+        s.setAttribute("data-seg", P3_STAGES[i]);
+        segs.appendChild(s);
+      }
+    }
+    var n = P3_STAGES.filter(function (k) { return !!S3[k]; }).length;
+    $$("#p3segs .seg").forEach(function (s) {
+      s.classList.toggle("done", !!S3[s.getAttribute("data-seg")]);
+    });
+    var prog = $("#p3prog");
+    if (prog) prog.textContent = n + " / " + P3_STAGES.length;
+    renderNext(n);
+  }
+
+  function renderNext(n) {
+    var nb = $("#nextBox");
+    if (!nb) return;
+    nb.innerHTML = "";
+    var nextId = null;
+    for (var k = 0; k < P3_STAGES.length; k++) {
+      if (!S3[P3_STAGES[k]]) { nextId = P3_STAGES[k]; break; }
+    }
+    if (!nextId) {
+      nb.classList.add("allclear");
+      var t = document.createElement("span");
+      t.className = "nx-name";
+      t.textContent = "六个模块全部完成。";
+      nb.appendChild(t);
+      var sp = document.createElement("span"); sp.className = "nx-sp"; nb.appendChild(sp);
+      var seen = document.createElement("button");
+      seen.type = "button"; seen.className = "btn";
+      seen.setAttribute("data-goto-ending", "1");
+      seen.textContent = S3.done ? "◈ 再看隐藏结局" : "◈ 看隐藏结局";
+      seen.addEventListener("click", openEnding);
+      nb.appendChild(seen);
+      return;
+    }
+    nb.classList.remove("allclear");
+    var lab = document.createElement("span");
+    lab.className = "nx-lab"; lab.textContent = "下一步";
+    var nm = document.createElement("span");
+    nm.className = "nx-name";
+    nm.textContent = "P3-0" + (P3_STAGES.indexOf(nextId) + 1) + " · " + P3_TITLES[nextId];
+    var sp2 = document.createElement("span"); sp2.className = "nx-sp";
+    var go = document.createElement("button");
+    go.type = "button"; go.className = "btn";
+    go.setAttribute("data-goto", nextId);
+    go.textContent = "开始";
+    go.addEventListener("click", function () { openStage(nextId); });
+    nb.appendChild(lab); nb.appendChild(nm); nb.appendChild(sp2); nb.appendChild(go);
+  }
+
+  /* ============================================================
+     启动
+     ============================================================ */
+  $$('#mods .mod').forEach(function (b) {
+    b.addEventListener("click", function () { openStage(b.getAttribute("data-stage")); });
+  });
+  $$('.stage [data-close]').forEach(function (b) {
+    b.addEventListener("click", function () {
+      var st = b.closest(".stage");
+      if (st) closeStage(st.id.replace("stage-", ""));
+    });
+  });
+
+  var crGo = $("#crGo");
+  if (crGo) crGo.addEventListener("click", crateSubmit);
+  var crClr = $("#crClear");
+  if (crClr) crClr.addEventListener("click", function () {
+    if (S3.crate) return;
+    crateSel = []; crateRender();
+  });
+  var flGo = $("#flGo");
+  if (flGo) flGo.addEventListener("click", flSubmit);
+  var flClr = $("#flClear");
+  if (flClr) flClr.addEventListener("click", function () {
+    if (S3.flicker) return;
+    flSel = []; flRender();
+  });
+  var exGo = $("#exGo");
+  if (exGo) exGo.addEventListener("click", function () {
+    var sel = $('#exGrid .ex-opt.sel');
+    if (sel) exitPick(sel.getAttribute("data-opt"), sel);
+    else {
+      var out = $("#exOut");
+      if (out) out.innerHTML = '<span class="er">✗ 先选一条候选，再点「确认出口」。</span>';
+    }
+  });
+
+  // 重置第三趟（两步确认）
+  var rst = $("#p3Reset");
+  if (rst) rst.addEventListener("click", function () {
+    if (rst.getAttribute("data-armed") !== "1") {
+      rst.setAttribute("data-armed", "1");
+      rst.textContent = "再点一次确认重置";
+      beep(300, 0.1, "square", 0.035);
+      setTimeout(function () {
+        if (rst && rst.getAttribute("data-armed") === "1") {
+          rst.removeAttribute("data-armed");
+          rst.textContent = "重置第三趟";
+        }
+      }, 4000);
+      return;
+    }
+    try { localStorage.removeItem(P3_KEY); } catch (e) {}
+    try { location.reload(); } catch (e) {}
+  });
+
+  // 解锁后启动
+  if (UNLOCKED) {
+    var lock = $("#lock");
+    if (lock) lock.style.display = "none";
+    var boot = $("#boot");
+    boot.classList.add("done");
+    setTimeout(function () { if (boot) boot.style.display = "none"; }, 500);
+    print("WQFWS // 第三趟 · 宜居地带", "dim");
+    print("门禁已解除。", "ok");
+    print("六个模块全部开放，从你上次的位置继续。", "dim");
+    renderAll();
+    if (S3.done) {
+      print("你已经走完过第三趟。上方引导条里的「◈ 再看隐藏结局」可以重看。", "dim");
+    }
+  } else {
+    // 锁定：显示锁屏，隐藏 boot
+    var lockEl = $("#lock");
+    if (lockEl) {
+      var lp2 = $("#lockP2");
+      if (lp2) lp2.textContent = P2.doneCount + " / 6";
+      var ld = $("#lockDone");
+      if (ld) ld.textContent = P2.hasDone ? "已看" : "未看";
+      lockEl.classList.add("show");
+    }
+    var boot2 = $("#boot");
+    if (boot2) { boot2.classList.add("done"); setTimeout(function () { boot2.style.display = "none"; }, 400); }
+  }
+})();
+</script>
+</body>
+</html>
