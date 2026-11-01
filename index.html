@@ -238,6 +238,9 @@
   }
   .foot a { color: var(--g-dim); text-decoration: none; border-bottom: 1px dotted rgba(109,255,158,0.3); }
   .foot a:hover { color: var(--g-bright); border-bottom-color: var(--g-bright); }
+  /* 重置进度：待确认状态标红，避免误点 */
+  .foot a[data-armed="1"] { color: var(--red); border-bottom-color: var(--red); }
+  .foot a[data-armed="1"]:hover { color: #ffb3b3; }
 
   /* ============ 开机自检 ============ */
   #boot {
@@ -1285,7 +1288,8 @@
 
       <div class="foot">
         主办：汪前飞个人工作室　　运维：WQF STUDIO<br />
-        本站为个人作品展示页，内容纯属虚构。 · <a href="#" id="rebootLink">重新自检</a>
+        本站为个人作品展示页，内容纯属虚构。 · <a href="#" id="rebootLink">重新自检</a> ·
+        <a href="#" id="resetLink">重置进度</a>
       </div>
     </div>
   </div>
@@ -1971,7 +1975,9 @@ try {
     { id: "03", key: "gate", name: "gate", desc: "页脚之门 · 你刚刚穿过的那扇门", url: MAIN_SITE + PW_Q + "#gate" },
     { id: "04", key: "videos", name: "videos", desc: "二创视频展览 · 汪前飞的作品", url: MAIN_SITE + PW_Q + "#videos" },
     { id: "05", key: "chess", name: "chess", desc: "象棋 · 人机 / 本地 / 自对弈", url: MAIN_SITE + PW_Q + "#chess" },
-    { id: "06", key: "adventure", name: "adventure", desc: "后室探险 · 文字冒险模拟器", url: MAIN_SITE + PW_Q + "#adventure" }
+    { id: "06", key: "adventure", name: "adventure", desc: "后室探险 · 文字冒险模拟器", url: MAIN_SITE + PW_Q + "#adventure" },
+    { id: "07", key: "phase2", name: "phase2", desc: "阈界回访 · 你离开的时候落下了什么", url: "./phase2.html" },
+    { id: "08", key: "phase3", name: "level-1", desc: "宜居地带 · 黄色地狱的另一头", url: "./phase3.html" }
   ];
 
   var found = {};
@@ -3911,6 +3917,34 @@ try {
       if (bootEl) { bootEl.style.display = ""; bootEl.classList.remove("done"); }
       if (bootText) bootText.textContent = "";
       typeBoot();
+    });
+  }
+
+  /* 重置第一趟的进度：两步确认（页面里没有别的确认手段）
+     清的是主线自己的三个键；第二趟的 wqfws-p2 不动 ——
+     重置后第二趟会重新上锁，但它的进度还在，再通关一次就能接着玩。 */
+  var resetLink = $("#resetLink");
+  if (resetLink) {
+    resetLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (resetLink.getAttribute("data-armed") !== "1") {
+        resetLink.setAttribute("data-armed", "1");
+        resetLink.textContent = "再点一次确认重置";
+        beep(300, 0.1, "square", 0.035);
+        print("重置进度：再点一次会清空第一趟的全部存档。", "warn");
+        print("  第二趟的存档不受影响，但会重新上锁 —— 得再走完一遍十一关才能进去。", "dim");
+        setTimeout(function () {
+          if (resetLink && resetLink.getAttribute("data-armed") === "1") {
+            resetLink.removeAttribute("data-armed");
+            resetLink.textContent = "重置进度";
+          }
+        }, 5000);
+        return;
+      }
+      [STORE, GATE_KEY, "wqfws-found-v1"].forEach(function (k) {
+        try { localStorage.removeItem(k); } catch (err) {}
+      });
+      try { location.reload(); } catch (err) {}
     });
   }
 
