@@ -942,8 +942,7 @@
     isolation: "孤立效应", noise: "噪音", lights: "熄灯区",
     redroom: "红室", carpet: "地毯", exit: "出口"
   };
-  var MAIN_SITE = "https://chuying1-git.github.io/need-key/";
-  var PW_Q = "?pw=2zhouniankuaile";
+
 
   /* ============================================================
      存档
@@ -1891,19 +1890,17 @@
      结局
      ============================================================ */
   var P2_ENDING = [
-    { t: "你推开了那扇门。" },
-    { t: "狭小的房间。两张椅子。桌上压着一张纸，边角被地毯的液体浸黄了。" },
+    { t: "你投入那面闪烁的墙壁。" },
+    { t: "墙的另一边没有黄色。混凝土、立柱、天花板上漏水的细管，管道间传来零星的金属撞击声。" },
     { sep: true },
-    { t: "从后室归来", q: true },
-    { t: "二周年快乐", q: true },
+    { t: "Level 1 · 宜居地带", q: true },
+    { t: "比那个黄色地狱复杂，也比它致命。但这是第一次，你闻到了别的味道 —— 板条箱里杏仁水的那种甜。" },
     { sep: true },
-    { t: "是你的字迹。你不记得自己写过。" },
-    { t: "纸的背面还有一行，被水渍晕开了一半 —— 现在你终于把它读全了：" },
+    { t: "你想起那间狭小的房间、那张纸。背面被水渍晕开的那半行，现在你终于读全了：" },
+    { t: "先出来的人，可以再走一趟。再走一趟。", q: true },
     { sep: true },
-    { t: "孤立效应说，两个人永远找不到彼此。", q: true },
-    { t: "它没说，先出去的那个人可以再回来一趟。", q: true },
-    { sep: true },
-    { t: "便签角落压着一个日期：两年前的今天。" }
+    { t: "从后室归来，二周年快乐。" },
+    { t: "便签角落那个日期，是两年前的今天。" }
   ];
 
   function renderEnding() {
@@ -1923,10 +1920,8 @@
     a1.href = "./index.html";
     a1.textContent = "← 回到第一趟";
     var a2 = document.createElement("a");
-    a2.href = MAIN_SITE + PW_Q;
-    a2.target = "_blank";
-    a2.rel = "noopener";
-    a2.textContent = "进入主站 →";
+    a2.href = "./phase3.html";
+    a2.textContent = "前往 Level 1 →";
     var a3 = document.createElement("a");
     a3.href = "#";
     a3.setAttribute("data-replay", "1");
