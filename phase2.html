@@ -132,6 +132,22 @@
   }
   .seg.done { background: var(--g); border-color: var(--g); box-shadow: 0 0 12px rgba(255, 210, 125, 0.55); }
 
+  .nextbox {
+    display: flex; align-items: center; gap: 11px; flex-wrap: wrap;
+    margin: 0 0 17px; padding: 11px 14px;
+    border: 1px dashed rgba(255, 210, 125, 0.28); border-radius: 10px;
+    background: rgba(255, 210, 125, 0.035);
+    font-size: 11.5px; color: var(--g-dim);
+  }
+  .nextbox .nx-lab { font-size: 10px; letter-spacing: 0.16em; color: rgba(255, 210, 125, 0.42); }
+  .nextbox .nx-name { font-size: 12.5px; color: var(--g-bright); }
+  .nextbox .nx-sp { flex: 1; }
+  .nextbox.allclear {
+    border-style: solid; border-color: rgba(109, 255, 158, 0.42);
+    background: rgba(109, 255, 158, 0.06);
+  }
+  .nextbox.allclear .nx-name { color: #d8ffe6; }
+
   .mods { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 11px; }
 
   .mod {
@@ -613,8 +629,10 @@
     <div class="p2bar">
       <span>进度</span>
       <div class="p2segs" id="p2segs"></div>
-      <span id="p2prog">0 / 4</span>
+      <span id="p2prog">0 / 6</span>
     </div>
+
+    <div class="nextbox" id="nextBox"></div>
 
     <div class="mods" id="mods">
       <button class="mod" type="button" data-stage="isolation">
@@ -659,7 +677,7 @@
 
     <div class="footer">
       <a href="./index.html">← 回到第一趟</a>
-      <button class="btn ghost" id="endAgain" type="button" style="display:none">◈ 再看隐藏结局</button>
+      <button class="btn ghost" id="p2Reset" type="button">重置第二趟</button>
       <span class="grow"></span>
       <span style="color:rgba(255,210,125,0.28)">设定依据 · The Backrooms 中文维基「Level 0 - 阈界」</span>
     </div>
@@ -780,7 +798,8 @@
 
       <div class="stage-actions">
         <button class="btn" id="lzHide" type="button">记住了，关灯</button>
-        <button class="btn ghost" id="lzRetry" type="button">重新亮灯</button>
+        <button class="btn ghost" id="lzRetry" type="button">再亮一次</button>
+        <button class="btn ghost" id="lzReshuffle" type="button">换一组</button>
       </div>
 
       <div class="stage-out" id="lzOut">灯还亮着 —— 记住顺序。</div>
@@ -919,6 +938,10 @@
   var STORE_P2 = "wqfws-p2";       // 第二趟自己的存档
 
   var P2_STAGES = ["isolation", "noise", "lights", "redroom", "carpet", "exit"];
+  var STAGE_TITLES = {
+    isolation: "孤立效应", noise: "噪音", lights: "熄灯区",
+    redroom: "红室", carpet: "地毯", exit: "出口"
+  };
   var MAIN_SITE = "https://chuying1-git.github.io/need-key/";
   var PW_Q = "?pw=2zhouniankuaile";
 
@@ -1499,7 +1522,9 @@
     var box = $("#bottles");
     if (!box) return;
     box.innerHTML = "";
-    carpetTested = S2.carpet ? CARPET_SAMPLES.map(function (s) { return s.id; }) : [];
+    // 已通关才把六瓶全部填成已检测；没通关就保留已有进度，
+    // 重开面板不该把已经测过的瓶子清空
+    if (S2.carpet) carpetTested = CARPET_SAMPLES.map(function (s) { return s.id; });
     CARPET_SAMPLES.forEach(function (s, i) {
       var b = document.createElement("button");
       b.type = "button";
@@ -2020,6 +2045,57 @@
     });
     var prog = $("#p2prog");
     if (prog) prog.textContent = n + " / " + P2_STAGES.length;
+
+    renderNext(n);
+  }
+
+  // 「下一步」引导：六个模块都开着，所以只指路，不强制顺序
+  function renderNext(n) {
+    var nb = $("#nextBox");
+    if (!nb) return;
+    nb.innerHTML = "";
+
+    var nextId = null;
+    for (var k = 0; k < P2_STAGES.length; k++) {
+      if (!S2[P2_STAGES[k]]) { nextId = P2_STAGES[k]; break; }
+    }
+
+    if (!nextId) {
+      nb.classList.add("allclear");
+      var t = document.createElement("span");
+      t.className = "nx-name";
+      t.textContent = "六个模块全部完成。";
+      nb.appendChild(t);
+      var sp = document.createElement("span");
+      sp.className = "nx-sp";
+      nb.appendChild(sp);
+      var seen = document.createElement("button");
+      seen.type = "button";
+      seen.className = "btn";
+      seen.setAttribute("data-goto-ending", "1");
+      seen.textContent = S2.done ? "◈ 再看隐藏结局" : "◈ 看隐藏结局";
+      seen.addEventListener("click", openEnding);
+      nb.appendChild(seen);
+      return;
+    }
+
+    nb.classList.remove("allclear");
+    var lab = document.createElement("span");
+    lab.className = "nx-lab";
+    lab.textContent = "下一步";
+    var nm = document.createElement("span");
+    nm.className = "nx-name";
+    nm.textContent = "P2-0" + (P2_STAGES.indexOf(nextId) + 1) + " · " + STAGE_TITLES[nextId];
+    var sp2 = document.createElement("span");
+    sp2.className = "nx-sp";
+    var go = document.createElement("button");
+    go.type = "button";
+    go.className = "btn";
+    go.setAttribute("data-goto", nextId);
+    go.textContent = "开始";
+    go.addEventListener("click", function () { openStage(nextId); });
+
+    nb.appendChild(lab); nb.appendChild(nm); nb.appendChild(sp2); nb.appendChild(go);
   }
 
   /* ============================================================
@@ -2131,10 +2207,21 @@
     var lr = $("#lzRetry");
     if (lr) lr.addEventListener("click", function () {
       if (S2.lights) return;
+      // 再亮一次：顺序保持不变，只是重新给你看一眼
+      // （走错一步不该把已经记住的东西全废掉）
+      lzDark = false; lzStep = 0;
+      lzRender();
+      var out = $("#lzOut");
+      if (out) out.textContent = "灯又亮了 —— 顺序没变，再看一遍。";
+      beep(520, 0.08);
+    });
+    var lrs = $("#lzReshuffle");
+    if (lrs) lrs.addEventListener("click", function () {
+      if (S2.lights) return;
       lzGen(); lzBuild(); lzRender();
       var out = $("#lzOut");
-      if (out) out.textContent = "重新亮灯 —— 记住新的顺序。";
-      beep(520, 0.08);
+      if (out) out.textContent = "换了一组 —— 记住新的顺序。";
+      beep(460, 0.1);
     });
     var rg = $("#rrGo");
     if (rg) rg.addEventListener("click", roomsSubmit);
@@ -2153,17 +2240,29 @@
     armSkipBoot();
     typeBoot();
 
-    // 已经通关过：给一个重看隐藏结局的常驻入口
-    var ea = $("#endAgain");
-    if (ea && S2.done) {
-      ea.style.display = "";
-      ea.addEventListener("click", openEnding);
-    }
+    // 重置第二趟：两步确认，避免误点（页面里没有别的确认手段）
+    var rst = $("#p2Reset");
+    if (rst) rst.addEventListener("click", function () {
+      if (rst.getAttribute("data-armed") !== "1") {
+        rst.setAttribute("data-armed", "1");
+        rst.textContent = "再点一次确认重置";
+        beep(300, 0.1, "square", 0.035);
+        setTimeout(function () {
+          if (rst && rst.getAttribute("data-armed") === "1") {
+            rst.removeAttribute("data-armed");
+            rst.textContent = "重置第二趟";
+          }
+        }, 4000);
+        return;
+      }
+      try { localStorage.removeItem("wqfws-p2"); } catch (e) {}
+      try { location.reload(); } catch (e) {}
+    });
 
     // 已通关过就在日志里说一声
     if (S2.done) {
       print("");
-      print("你已经走完过第二趟。底部「◈ 再看隐藏结局」可以重看。", "dim");
+      print("你已经走完过第二趟。上方引导条里的「◈ 再看隐藏结局」可以重看。", "dim");
     }
   }
 
