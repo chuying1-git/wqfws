@@ -211,6 +211,8 @@
   .btn.ghost { background: transparent; border-color: var(--g-faint); color: var(--g-dim); }
   .btn.ghost:hover:not(:disabled) { color: var(--g-bright); border-color: rgba(159,184,217,0.5); background: rgba(159,184,217,0.07); }
 
+  .stage-actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+
   .grid { display: grid; gap: 7px; }
   .cell {
     border: 1px solid var(--g-faint); border-radius: 8px;
@@ -256,6 +258,11 @@
     background: var(--green); box-shadow: 0 0 12px 3px rgba(88,255,159,0.75);
     animation: lampBlink 3.1s ease-in-out infinite;
   }
+  /* 动态生成的 class（js 里 add）给个兜底，避免未定义告警 */
+  .sec-log { min-height: 96px; }
+  .nav-cell { min-height: 40px; }
+  .cr-item, .fl-opt, .ex-opt { min-height: 56px; }
+  .en-opt { min-height: 44px; }
   @keyframes lampBlink {
     0%, 100% { opacity: 0.25; } 40% { opacity: 1; } 55% { opacity: 0.35; } 70% { opacity: 0.9; }
   }
@@ -465,7 +472,7 @@
           </div>
           <div class="grid" id="crGrid" style="grid-template-columns: repeat(4, 1fr);"></div>
           <div class="stage-out" id="crOut">点一下挑一件，再点一下放下。</div>
-          <div class="stage-actions" style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+          <div class="stage-actions">
             <button class="btn" id="crGo" type="button">封箱出发</button>
             <button class="btn ghost" id="crClear" type="button">清空</button>
           </div>
@@ -490,7 +497,7 @@
             勾选你认为正确的那 4 条。
           </div>
           <div class="grid" id="flGrid" style="grid-template-columns: repeat(2, 1fr);"></div>
-          <div class="stage-actions" style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+          <div class="stage-actions">
             <button class="btn" id="flGo" type="button">交卷</button>
             <button class="btn ghost" id="flClear" type="button">清空</button>
           </div>
@@ -537,7 +544,7 @@
           </div>
           <div class="grid" id="exGrid" style="grid-template-columns: repeat(2, 1fr);"></div>
           <div class="stage-out" id="exOut">维基原话：「最常见的出口」。</div>
-          <div class="stage-actions" style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+          <div class="stage-actions">
             <button class="btn" id="exGo" type="button">确认出口</button>
           </div>
           <div class="stage-done" id="exDone">✓ 你顺着管道与仪表板的方向走了很久。墙在变白。</div>
@@ -737,6 +744,7 @@
     if (L.tag === P3_SECTOR_ANSWER) {
       S3.sector = true;
       save();
+      renderAll();
       el.classList.add("right");
       $$("#secLogs .sec-log").forEach(function (o) { if (o !== el) o.style.opacity = "0.45"; });
       var done = $("#secDone"); if (done) done.classList.add("on");
@@ -843,6 +851,7 @@
     if (ans && r === ans.r && c === ans.c) {
       S3.nav = true;
       save();
+      renderAll();
       el.classList.add("right");
       var done = $("#navDone"); if (done) done.classList.add("on");
       var pr = $("#navProg"); if (pr) pr.textContent = "1 / 1";
@@ -924,6 +933,7 @@
     if (same) {
       S3.crate = true;
       save();
+      renderAll();
       $$("#crGrid .cr-item").forEach(function (c) {
         if (P3_CRATE_TAKE.indexOf(c.getAttribute("data-item")) >= 0) c.classList.add("right");
         else c.classList.add("wrong");
@@ -1007,6 +1017,7 @@
     if (same) {
       S3.flicker = true;
       save();
+      renderAll();
       $$("#flGrid .fl-opt").forEach(function (c) {
         var id = c.getAttribute("data-opt");
         if (P3_FLICKER_ANSWER.indexOf(id) >= 0) c.classList.add("right");
@@ -1186,6 +1197,7 @@
   function entitiesWin() {
     S3.entities = true;
     save();
+    renderAll();
     var done = $("#enDone"); if (done) done.classList.add("on");
     var out = $("#enOut"); if (out) out.innerHTML = '<span class="ok2">✓ 五种实体，五种活法。</span>';
     print("实体：5 / 5。", "ok");
@@ -1236,6 +1248,7 @@
     if (id === P3_EXIT_ANSWER) {
       S3.exit = true;
       save();
+      renderAll();
       el.classList.add("right");
       $$("#exGrid .ex-opt").forEach(function (o) { if (o !== el) o.style.opacity = "0.45"; });
       var done = $("#exDone"); if (done) done.classList.add("on");
@@ -1243,12 +1256,15 @@
       var out = $("#exOut"); if (out) out.innerHTML = '<span class="ok2">✓ 你顺着管道与仪表板的方向走了很久。墙在变白。</span>';
       print("出口：最常见的那条。", "ok");
       beep(660, 0.12); setTimeout(function () { beep(990, 0.16); }, 130);
-      setTimeout(function () { closeStage("exit"); openEnding(); }, 2200);
+      // 不再自动弹结局 —— 避免结局面板盖住引导条 / 页脚按钮；
+      // 全通后引导条会出现「看隐藏结局」，由玩家自己点
+      setTimeout(function () { closeStage("exit"); }, 1600);
     } else {
       el.classList.add("wrong");
-      setTimeout(function () { el.classList.remove("wrong"); }, 700);
+      setTimeout(function () { el.classList.remove("wrong", "sel"); }, 700);
       var out2 = $("#exOut");
-      if (out2) out2.innerHTML = '<span class="er">✗ 这条也能走通，但不是「最常见」的那条。维基原话：「最常见的出口」。</span>';
+      if (out2) out2.innerHTML = '<span class="er">✗ 这条也能走通，但不是「最常见」的那条。再选一条试试。</span>';
+      exSel = null;
       print("出口：不是最常见的那条。", "warn");
       beep(200, 0.12, "square", 0.04);
     }

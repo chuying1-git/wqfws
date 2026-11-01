@@ -1876,7 +1876,9 @@
       setTimeout(function () { beep(960, 0.12); }, 120);
       setTimeout(function () { beep(1280, 0.3); }, 260);
       renderAll();
-      setTimeout(function () { closeStage("exit"); openEnding(); }, 2200);
+      // 不再自动弹结局 —— 避免结局面板盖住引导条 / 页脚按钮；
+      // 全通后引导条会出现「看隐藏结局」，由玩家自己点
+      setTimeout(function () { closeStage("exit"); }, 1600);
     } else {
       beep(200, 0.12, "square", 0.04);
       el.classList.add("wrong");
