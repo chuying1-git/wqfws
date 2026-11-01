@@ -194,17 +194,29 @@ async function stageLights() {
   await p.waitFor(() => p.hasClass("#stage-redroom", "on"), 3000, "自动切到红室");
   p.close();
 
-  group("P2-03 重新亮灯");
+  group("P2-03 再亮一次 / 换一组");
   const q = openP2({ seed: [MAIN_OK, ["wqfws-p2", JSON.stringify({ isolation: true, noise: true })]] });
   await boot(q);
   q.click('#mods .mod[data-stage="lights"]');
   await q.waitFor(() => q.hasClass("#stage-lights", "on"), 1500, "面板打开");
-  const before = lzSeq(q).join(",");
+
+  const seq0 = lzSeq(q);
+  const before = seq0.join(",");
+  q.click("#lzHide");
+  q.click(`#lzGrid .lz[data-cell="${seq0[5]}"]`);          // 一上来就走错
+  ok(q.text("#lzOut").indexOf("第 1 步走错了") !== -1, "错步提示");
+
+  // 关键：走错后「再亮一次」必须给回【同一组】顺序，不能把记住的东西废掉
   q.click("#lzRetry");
-  const after = lzSeq(q).join(",");
-  eq(lzSeq(q).length, 6, "重来后仍是 6 格");
-  ok(before !== after || true, "重来会换一组（随机，不强断言）");
-  eq(q.errors.length, 0, "重来无脚本错误");
+  eq(lzSeq(q).join(","), before, "「再亮一次」给回同一组顺序");
+  ok(!q.hasClass("#lzGrid", "dark"), "再亮一次后灯是亮着的");
+  eq(q.text("#lzProg"), "待解", "再亮一次后步数归零");
+
+  // 「换一组」才换新的
+  q.click("#lzReshuffle");
+  eq(lzSeq(q).length, 6, "换一组后仍是 6 格");
+  eq(new Set(lzSeq(q)).size, 6, "换一组后仍互不重复");
+  eq(q.errors.length, 0, "重亮 / 换组无脚本错误");
   q.close();
 }
 
@@ -306,6 +318,21 @@ async function stageCarpet() {
   eq(p.text("#cpProg"), "已判定", "状态变已判定");
   await p.waitFor(() => p.hasClass("#stage-exit", "on"), 3500, "进入出口关");
   p.close();
+
+  // 部分测过后关掉面板再打开，已测的瓶子不能丢
+  const r = openP2({ seed: [MAIN_OK, seed] });
+  await boot(r);
+  r.click('#mods .mod[data-stage="carpet"]');
+  await r.waitFor(() => r.hasClass("#stage-carpet", "on"), 1500, "面板打开");
+  ["A", "B", "C"].forEach(id => r.click(`#bottles .btl[data-btl="${id}"]`));
+  eq(r.text("#cpProg"), "3 / 6", "测了 3 瓶");
+  r.click('#stage-carpet [data-close]');
+  r.click('#mods .mod[data-stage="carpet"]');
+  eq(r.text("#cpProg"), "3 / 6", "重开面板后已测的 3 瓶没有丢");
+  eq(r.$$("#bottles .btl.detected").length, 3, "3 瓶保持已检测");
+  eq(r.$$("#cpChoice .cp-choice").length, 0, "没测完仍不出现结论");
+  eq(r.errors.length, 0, "重开无脚本错误");
+  r.close();
 }
 
 /* ============================================================
@@ -508,14 +535,52 @@ async function persistence() {
   eq(p.$$('#walls .wl[data-flicker="1"].right').length, 1, "出口重开后那面墙保持高亮");
   p.click('#stage-exit [data-close]');
 
-  // 通关后应有重看结局的常驻入口
-  const ea = p.$("#endAgain");
-  ok(ea && ea.style.display !== "none", "通关后出现「再看隐藏结局」入口");
-  p.click("#endAgain");
+  // 通关后引导条里应有重看结局的入口
+  const ea = p.$("#nextBox [data-goto-ending]");
+  ok(!!ea, "通关后引导条出现「再看隐藏结局」入口");
+  ok(p.hasClass("#nextBox", "allclear"), "引导条切到全部完成样式");
+  ok(p.text("#nextBox").indexOf("六个模块全部完成") !== -1, "引导条写明全部完成");
+  p.click(ea);
   await wait(40);
   ok(p.hasClass("#stage-ending", "on"), "点它能重新打开结局");
   ok(p.text("#endBd").indexOf("从后室归来") !== -1, "重看的结局内容完整");
   p.close();
+}
+
+/* ============================================================
+   8b. 「下一步」引导 + 重置
+   ============================================================ */
+async function nextGuide() {
+  group("下一步引导");
+  const p = openP2({ seed: [MAIN_OK] });
+  await boot(p);
+  eq(p.$("#nextBox [data-goto]").getAttribute("data-goto"), "isolation", "初始指向 P2-01");
+  ok(p.text("#nextBox").indexOf("孤立效应") !== -1, "引导条写明关卡名");
+  p.click("#nextBox [data-goto]");
+  ok(p.hasClass("#stage-isolation", "on"), "点「开始」直接打开那一关");
+  p.click('#stage-isolation [data-close]');
+  p.close();
+
+  const q = openP2({ seed: [MAIN_OK, ["wqfws-p2", JSON.stringify({ isolation: true, noise: true })]] });
+  await boot(q);
+  eq(q.$("#nextBox [data-goto]").getAttribute("data-goto"), "lights", "完成 01/02 后指向 P2-03");
+  ok(q.text("#nextBox").indexOf("熄灯区") !== -1, "引导条显示 P2-03 的名字");
+  q.close();
+
+  group("重置第二趟");
+  const all = { isolation: true, noise: true, lights: true, redroom: true, carpet: true, exit: true, done: true };
+  const r = openP2({ seed: [MAIN_OK, ["wqfws-p2", JSON.stringify(all)]] });
+  await boot(r);
+  ok(!!r.$("#nextBox [data-goto-ending]"), "全完成后有看结局按钮");
+  const rst = r.$("#p2Reset");
+  ok(!!rst, "有重置按钮");
+  eq(rst.textContent, "重置第二趟", "初始文案");
+  r.click("#p2Reset");
+  eq(rst.getAttribute("data-armed"), "1", "第一次点进入待确认");
+  eq(rst.textContent, "再点一次确认重置", "文案变成确认提示");
+  ok(!!r.store("wqfws-p2"), "只点一次不会真的清掉存档");
+  eq(r.errors.length, 0, "重置流程无脚本错误");
+  r.close();
 }
 
 /* ============================================================
@@ -614,6 +679,7 @@ async function fullRun() {
     await stageExit();
     await ending();
     await persistence();
+    await nextGuide();
     await isolationFromMain();
     await fullRun();
   } catch (e) {
