@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>厨得快 - 内部邮箱系统</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    .mail-main {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    
+    .mail-header {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    
+    .mail-logo {
+      height: 80px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 20px var(--accent));
+      animation: pulse-glow 3s infinite;
+    }
+    
+    .mail-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--fg);
+    }
+    
+    .mail-subtitle {
+      color: var(--fg-muted);
+      font-size: 16px;
+    }
+    
+    /* Account cards */
+    .account-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      margin-bottom: 24px;
+      transition: var(--transition);
+    }
+    
+    .account-card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--glow);
+    }
+    
+    .account-card.zhou { border-left: 4px solid var(--accent); }
+    .account-card.hidden { border-left: 4px solid var(--danger); }
+    
+    .account-icon {
+      width: 60px; height: 60px;
+      margin: 0 auto 16px;
+      border-radius: 50%;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 24px;
+      color: var(--accent);
+    }
+    
+    .account-card.zhou .account-icon { background: var(--bg); color: var(--accent); }
+    .account-card.hidden .account-icon { background: var(--danger-dim); color: var(--danger); }
+    
+    .account-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .account-email { font-size: 13px; color: var(--fg-muted); margin-bottom: 8px; word-break: break-all; }
+    .account-pass { font-size: 12px; color: var(--fg-dim); font-family: var(--mono); }
+    
+    .action-btn {
+      width: 100%;
+      padding: 12px 24px;
+      font-size: 14px;
+      margin: 8px 0;
+    }
+    
+    .login-btn { background: var(--accent); color: var(--bg); border: none; }
+    .login-btn:hover { background: var(--accent-bright); }
+    .logout-btn { background: var(--danger); color: #fff; border: none; }
+    .logout-btn:hover { background: #c0392b; }
+    
+    .mail-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      min-height: 300px;
+    }
+    
+    .mail-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--fg);
+    }
+    
+    .mail-box.system { background: var(--bg-elevated); color: var(--fg-dim); }
+    .mail-box.system .sender { color: var(--accent); font-weight: 600; }
+    .mail-box.system .time { color: var(--fg-dim); font-size: 11px; }
+    
+    .mail-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: var(--fg);
+      font-family: var(--mono);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    
+    .send-mail-btn {
+      width: 100%;
+      padding: 10px;
+      font-size: 13px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    
+    .send-mail-btn:disabled { background: var(--fg-dim); cursor: not-allowed; }
+    
+    .mail-status {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--fg-muted);
+    }
+    
+    /* Sending mail form */
+    .compose-form {
+      margin-top: 24px;
+    }
+    
+    .compose-field {
+      margin-bottom: 12px;
+    }
+    
+    .compose-field label { display: block; font-size: 12px; color: var(--fg-muted); margin-bottom: 4px; }
+    
+    .compose-field .input-field { width: 100%; }
+    
+    .recipients { display: flex; gap: 8px; flex-wrap: wrap; }
+    .recipient-chip {
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: var(--mono);
+    }
+    
+    .remove-recipient { margin-left: 6px; color: var(--danger); cursor: pointer; font-size: 11px; }
+  </style>
+  <link rel="stylesheet" href="css/deep.css">
+  <!-- frag 2/5 · "te" -->
+</head>
+<body class="app">
+  <header class="site-header">
+    <div class="header-container">
+      <a href="index.html" class="logo-area">
+        <img src="assets/logo/厨得快1.png" alt="Logo" class="logo-img">
+        <span class="site-title">后室中文维基</span>
+      </a>
+      <div class="search-area" style="max-width:300px;">
+        <input type="text" class="search-input" placeholder="搜索..." disabled style="opacity:0.5;">
+      </div>
+      <nav class="category-nav">
+        <a href="index.html" class="nav-item">首页</a>
+        <a href="live.html" class="nav-item" style="color:var(--accent);">内测预约</a>
+        <a href="room.html" class="nav-item" style="color:var(--accent);">直播间</a>
+        <a href="mail.html" class="nav-item" style="color:var(--accent);">内部邮箱</a>
+        <a href="terminal.html" class="nav-item" id="terminal-nav-link" style="display:none;">终端</a>
+        <a href="cipher.html" class="nav-item">密钥本</a>
+        <a href="archive.html" class="nav-item" id="archive-nav-link" style="display:none;">机密档案</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="mail-main">
+      <div class="mail-header">
+        <img src="assets/logo/厨得快1.png" alt="厨得快" class="mail-logo">
+        <h1 class="mail-title">内部邮箱系统</h1>
+        <p class="mail-subtitle">zhouyanan@mail.com / 1543</p>
+      </div>
+      
+      <!-- Account selector -->
+      <div style="text-align:center;margin:24px 0;">
+        <button class="account-card zhou" id="zhou-account" 
+                style="background:var(--bg);color:var(--fg);border:1px solid var(--border);padding:16px 24px;font-size:14px;">
+          <div class="account-icon">Z</div>
+          <div class="account-name">周亚男</div>
+          <div class="account-email">zhouyanan@mail.com</div>
+        </button>
+        
+        <button class="account-card hidden" id="hidden-account" 
+                style="background:var(--bg);color:var(--fg);border:1px solid var(--border);padding:16px 24px;font-size:14px;display:none;">
+          <div class="account-icon">H</div>
+          <div class="account-name">隐藏账号</div>
+          <div class="account-email">hollow_observer_5832@wqfws.local</div>
+        </button>
+      </div>
+      
+      <div style="margin:24px 0;">
+        <span id="account-status" style="font-size:13px;color:var(--fg-muted);"></span>
+      </div>
+      
+      <!-- Mail box display -->
+      <div class="mail-content" id="mail-box">
+        <div style="color:var(--fg-dim);font-size:12px;text-align:center;padding:20px;">
+          <strong>请先登录账号</strong>
+        </div>
+      </div>
+      
+      <!-- Compose form -->
+      <div class="compose-form" id="compose-form" style="display:none;">
+        <div class="compose-field">
+          <label>收件人</label>
+          <input type="text" class="input-field" id="recipient-input" placeholder="输入邮箱地址" autocomplete="off">
+          <div class="suggested-recipients" id="suggested-recipients" style="display:none;margin-top:6px;"></div>
+        </div>
+        
+        <div class="compose-field">
+          <label>主题</label>
+          <input type="text" class="input-field" id="mail-subject" placeholder="邮件主题">
+        </div>
+        
+        <div class="compose-field">
+          <label>内容</label>
+          <textarea class="input-field" id="mail-body" rows="5" placeholder="邮件内容..."></textarea>
+        </div>
+        
+        <button class="send-mail-btn" id="send-mail-btn">发送邮件</button>
+        <div class="mail-status" id="mail-status"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="simple-site-footer">
+    厨得快 · 内部邮箱系统 · <span class="mono">wqfws-arg-state-v1</span>
+  </footer>
+
+  <script type="module" src="js/mail.js"></script>
+  <script src="js/trace.js" data-page="内部邮箱" data-trace="导播组会误发东西，误发的东西往往最真。" data-frag="2/5 = te"></script>
+</body>
+</html>

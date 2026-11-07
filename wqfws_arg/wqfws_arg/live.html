@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>厨得快 - 官方内测直播预约</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    .live-page {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    .live-hero {
+      text-align: center;
+      padding: 40px 20px;
+    }
+    .live-logo {
+      height: 80px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 0 20px var(--accent));
+      animation: glow-pulse 3s infinite;
+    }
+    .live-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, var(--fg), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .live-subtitle {
+      color: var(--fg-muted);
+      font-size: 16px;
+      margin-bottom: 24px;
+    }
+    .live-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 20px;
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .live-status.live { background: var(--danger-dim); border-color: var(--danger); color: var(--danger); }
+    .live-status .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: currentColor;
+      animation: pulse 1s infinite;
+    }
+    .live-status.live .dot { animation: pulse 0.5s infinite; }
+    
+    .countdown-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .countdown-label { font-size: 13px; color: var(--fg-muted); margin-bottom: 16px; }
+    .countdown-value {
+      font-family: var(--mono);
+      font-size: 48px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 4px;
+    }
+    .countdown-value.expired { color: var(--danger); }
+    
+    .reserve-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      text-align: center;
+    }
+    .reserve-btn {
+      font-size: 16px;
+      padding: 16px 48px;
+    }
+    .reserve-btn:disabled { opacity: 0.5; }
+    
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-top: 24px;
+    }
+    .info-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+    }
+    .info-card h4 { color: var(--accent); margin-bottom: 12px; font-size: 14px; }
+    .info-card p { font-size: 13px; color: var(--fg-muted); margin: 0; }
+    
+    .enter-room-btn {
+      width: 100%;
+      margin-top: 24px;
+      padding: 16px;
+      font-size: 16px;
+      display: none;
+    }
+    .enter-room-btn.visible { display: inline-flex; }
+    
+    .secret-hint {
+      margin-top: 32px;
+      padding: 16px;
+      background: var(--bg-elevated);
+      border: 1px dashed var(--accent-dim);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--fg-dim);
+      font-family: var(--mono);
+      text-align: center;
+    }
+    .secret-hint code { color: var(--accent); }
+  </style>
+  <!-- 登记不是唯一的门。有的人不需要等。 -->
+</head>
+<body class="app">
+  <header class="site-header">
+    <div class="header-container">
+      <a href="index.html" class="logo-area">
+        <img src="assets/logo/厨得快1.png" alt="Logo" class="logo-img">
+        <span class="site-title">后室中文维基</span>
+      </a>
+      <div class="search-area" style="max-width:300px;">
+        <input type="text" class="search-input" placeholder="搜索..." disabled style="opacity:0.5;">
+      </div>
+      <nav class="category-nav">
+        <a href="index.html" class="nav-item">首页</a>
+        <a href="live.html" class="nav-item" style="color:var(--accent);border-color:var(--accent);">内测预约</a>
+        <a href="mail.html" class="nav-item" id="mail-nav-link" style="display:none;">内部邮箱</a>
+        <a href="terminal.html" class="nav-item" id="terminal-nav-link" style="display:none;">终端</a>
+        <a href="archive.html" class="nav-item" id="archive-nav-link" style="display:none;">机密档案</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="live-page">
+      <div class="live-hero">
+        <img src="assets/logo/厨得快1.png" alt="厨得快" class="live-logo" id="live-logo">
+        <h1 class="live-title">厨得快官方内测直播</h1>
+        <p class="live-subtitle">新世界服务平台 · 居民登记专项行动</p>
+        <div class="live-status" id="live-status">
+          <span class="dot"></span>
+          <span id="status-text">未开始</span>
+        </div>
+      </div>
+      
+      <div class="countdown-card">
+        <div class="countdown-label">距离直播开启</div>
+        <div class="countdown-value mono" id="countdown-value">计算中...</div>
+        <div class="countdown-bar" style="margin-top:16px;max-width:300px;margin-left:auto;margin-right:auto;">
+          <div class="countdown-fill" id="countdown-fill" style="transition:width 1s linear;"></div>
+        </div>
+      </div>
+      
+      <div class="reserve-card" id="reserve-card">
+        <h2 style="margin-bottom:12px;">预约提醒</h2>
+        <p style="color:var(--fg-muted);margin-bottom:24px;">预约后将在直播开始前收到通知，可直接进入直播间参与互动。</p>
+        <button class="btn primary reserve-btn" id="reserve-btn" disabled>预约直播</button>
+        <p id="reserve-status" style="margin-top:16px;font-size:13px;color:var(--fg-dim);"></p>
+      </div>
+      
+      <button class="btn primary enter-room-btn" id="enter-room-btn">进入直播间 →</button>
+      
+      <div class="info-grid">
+        <div class="info-card">
+          <h4>直播内容</h4>
+          <p>隐藏菜谱解密 · 频率信标演示 · 居民档案展示 · 现场问答</p>
+        </div>
+        <div class="info-card">
+          <h4>参与方式</h4>
+          <p>预约成功后自动获得入场资格，直播时点击「进入直播间」即可</p>
+        </div>
+        <div class="info-card">
+          <h4>特别嘉宾</h4>
+          <p>签约主厨 Ellis 蒋（隐藏档案编号 7364-AL）</p>
+        </div>
+        <div class="info-card">
+          <h4>技术支持</h4>
+          <p>平台信息管理中心 · 新世界服务平台</p>
+        </div>
+      </div>
+      
+      <div class="secret-hint" id="secret-hint" style="display:none;">
+        <strong>系统提示：</strong> 直播间入场口令为 <code>xinshijie</code>（拼音：新世界）<br>
+        该口令仅在直播开始后有效，请妥善保管。
+      </div>
+    </div>
+  </main>
+
+  <footer class="simple-site-footer">
+    厨得快 · 官方内测直播预约页 · <span class="mono">wqfws-arg-state-v1</span>
+  </footer>
+
+  <script type="module">
+    import { loadState, set, get, setMany, has, getTimeSinceFirstVisit, getScheduledLiveTime, generateEmailCredentials } from './state.js';
+    import { route, navigate, initRouter } from './router.js';
+    
+    const state = loadState();
+    const countdownValue = document.getElementById('countdown-value');
+    const countdownFill = document.getElementById('countdown-fill');
+    const liveStatus = document.getElementById('live-status');
+    const statusText = document.getElementById('status-text');
+    const reserveBtn = document.getElementById('reserve-btn');
+    const reserveStatus = document.getElementById('reserve-status');
+    const enterRoomBtn = document.getElementById('enter-room-btn');
+    const secretHint = document.getElementById('secret-hint');
+    const mailNavLink = document.getElementById('mail-nav-link');
+    const terminalNavLink = document.getElementById('terminal-nav-link');
+    const archiveNavLink = document.getElementById('archive-nav-link');
+    
+    let countdownInterval = null;
+    const TOTAL_WAIT = 1200000; // 20 minutes
+    
+    function updateNav() {
+      mailNavLink.style.display = state.mailCreated ? 'inline-block' : 'none';
+      terminalNavLink.style.display = state.pipelineUnlocked ? 'inline-block' : 'none';
+      archiveNavLink.style.display = state.awakened ? 'inline-block' : 'none';
+    }
+    
+    function formatTime(ms) {
+      if (ms <= 0) return '00:00';
+      const mins = Math.floor(ms / 60000);
+      const secs = Math.floor((ms % 60000) / 1000);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    function updateCountdown() {
+      const scheduledTime = getScheduledLiveTime();
+      const now = Date.now();
+      const remaining = scheduledTime - now;
+      const elapsed = TOTAL_WAIT - remaining;
+      
+      if (remaining <= 0) {
+        countdownValue.textContent = '直播中';
+        countdownValue.classList.add('expired');
+        countdownFill.style.width = '100%';
+        liveStatus.classList.add('live');
+        statusText.textContent = 'LIVE';
+        reserveBtn.disabled = true;
+        reserveBtn.textContent = '直播进行中';
+        reserveStatus.textContent = '直播已开始，点击下方按钮进入';
+        enterRoomBtn.classList.add('visible');
+        secretHint.style.display = 'block';
+        if (countdownInterval) clearInterval(countdownInterval);
+      } else {
+        countdownValue.textContent = formatTime(remaining);
+        const pct = Math.min(100, Math.max(0, (elapsed / TOTAL_WAIT) * 100));
+        countdownFill.style.width = pct + '%';
+      }
+    }
+    
+    function showToast(title, body, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<div class="toast-title">${title}</div><div class="toast-body">${body}</div>`;
+      document.body.appendChild(toast);
+      setTimeout(() => { toast.style.animation = 'fade-in 0.3s ease reverse'; setTimeout(() => toast.remove(), 300); }, 4000);
+    }
+    
+    // Reserve button
+    if (state.liveReserved) {
+      reserveBtn.disabled = true;
+      reserveBtn.textContent = '已预约';
+      reserveStatus.textContent = `预约成功 · 将在 ${new Date(state.liveReserveTime + TOTAL_WAIT).toLocaleTimeString()} 开始`;
+      enterRoomBtn.classList.add('visible');
+      if (Date.now() >= getScheduledLiveTime()) {
+        secretHint.style.display = 'block';
+      }
+    } else {
+      reserveBtn.disabled = false;
+      reserveBtn.addEventListener('click', () => {
+        setMany({
+          liveReserved: true,
+          liveReserveTime: Date.now(),
+          livePopupShown: true // Skip notification since we're on the page
+        });
+        reserveBtn.disabled = true;
+        reserveBtn.textContent = '已预约';
+        reserveStatus.textContent = `预约成功 · 将在 ${new Date(Date.now() + TOTAL_WAIT).toLocaleTimeString()} 开始`;
+        enterRoomBtn.classList.add('visible');
+        showToast('预约成功', '20 分钟后直播开始，届时可直接进入直播间', 'success');
+        updateCountdown();
+      });
+    }
+    
+    enterRoomBtn.addEventListener('click', () => {
+      set('liveRoomEntered', true);
+      navigate('room.html');
+    });
+    
+    // Start countdown
+    updateCountdown();
+    countdownInterval = setInterval(updateCountdown, 1000);
+    
+    updateNav();
+    
+    route('live.html', () => {
+      updateCountdown();
+      updateNav();
+    });
+    
+    initRouter();
+    console.log('Live page loaded', state);
+  </script>
+  <script src="js/trace.js" data-page="登记" data-trace="时间锁只对普通访客生效。"></script>
+</body>
+</html>
