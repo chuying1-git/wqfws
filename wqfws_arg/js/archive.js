@@ -35,13 +35,13 @@ const ENTRIES = [
   },
   {
     id: 'ellis',
-    title: '签约主厨 Ellis 蒋 · 隐藏菜谱',
+    title: '签约记录员 Ellis 蒋 · 未登记档案',
     level: 'restricted',
-    tags: ['chef', 'Hanyu', '7364-AL'],
+    tags: ['记录员', 'Hanyu', '7364-AL'],
     cond: () => state.hiddenEntryUnlocked || state.awakened,
     body: `
       <p>内部登记代号 <span class="code">Hanyu</span>。签约编号 <span class="code">7364-AL</span>。</p>
-      <p>公开菜谱 108 条；另有 6 条「隐形菜谱」，只在特定层级供应。</p>
+      <p>公开记录 108 条；另有 6 条「未登记档案」，只在特定层级可读。</p>
       <p>招聘中心的编号规则是「年份后两位 + 序号」。2023 年第 64 位是 2364，因此 7364 不属于任何公开年份序列 —— 这是刻意为之。</p>
     `,
   },
@@ -78,7 +78,7 @@ const ENTRIES = [
     cond: () => state.zhouAccountUnlocked,
     body: `
       <p>员工邮箱 <span class="code">zhouyanan@mail.com</span>（口令 1543）中保存了复核结论。</p>
-      <p>结论：通过。持有人具备「隐藏菜谱」权限。</p>
+      <p>结论：通过。持有人具备「未登记档案」权限。</p>
       <p>备注：该邮箱并非为本次内测开设，而是长期存在的内部账号 —— 它早就在那里了。</p>
     `,
   },
@@ -164,7 +164,7 @@ function render() {
 
     <div class="section-title" style="margin-top:16px;">档案检索</div>
     <p class="stage-note" style="margin-top:8px;">
-      支持关键词：主厨代号、信标名、频率、trace 术语、内部账号。
+      支持关键词：记录员代号、信标名、频率、trace 术语、内部账号。
     </p>
     <div class="gate-field" style="margin-top:10px;">
       <span class="pfx">&gt;</span>
@@ -223,7 +223,7 @@ function doSearch() {
 
   const hits = KEYWORDS.filter(g => g.k.some(k => q.includes(k)));
   if (!hits.length) {
-    out.innerHTML = `<div class="stage-note">无匹配档案。试试：主厨代号 / 信标名 / 频率 / trace 术语 / 内部账号。</div>`;
+    out.innerHTML = `<div class="stage-note">无匹配档案。试试：记录员代号 / 信标名 / 频率 / trace 术语 / 内部账号。</div>`;
     return;
   }
   const ids = [...new Set(hits.map(h => h.hit))];
@@ -335,7 +335,7 @@ function showEnding() {
     <ul class="stage-note" style="line-height:2;padding-left:20px;">
       <li><span class="code">875</span> —— 信号主频，它是「听得见」的那一层；</li>
       <li><span class="code">ALMOND</span> —— 信标名，它是「被登记」的那一层；</li>
-      <li><span class="code">7364-AL</span> —— 主厨编号，它是「有身份」的那一层；</li>
+      <li><span class="code">7364-AL</span> —— 记录员编号，它是「有身份」的那一层；</li>
       <li><span class="code">HANYU</span> —— 内部代号，它是「有名字」的那一层（只能用密钥本那张表解出来）；</li>
       <li><span class="code">60312219015</span> —— <b>笑脸</b>的抖音号，它是「真实存在」的那一层 ——
           这一层不在任何页面上，只在那张笑魇 PNG 的蓝色通道最低位里。</li>
@@ -380,7 +380,7 @@ if (!state.awakened) {
     lines: [
       '本档案库仅对通过觉醒流程的访问者开放。',
       '觉醒条件：在维基主页连续点击站点标识 7 次。',
-      '完整访问链路：搜索隐藏主厨 → 预约直播 → 通过复核 → 回复归档邮件 → 贯通终端管道。',
+      '完整访问链路：搜索隐藏记录员 → 预约直播 → 通过复核 → 回复归档邮件 → 贯通终端管道。',
     ],
     hint: '回到 <a href="index.html">维基主页</a>，点击左上角标识 7 次。',
   });

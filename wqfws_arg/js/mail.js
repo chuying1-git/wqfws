@@ -73,11 +73,11 @@ function inboxFor(acctKey) {
       from: '招聘中心 <hr@wqfws.local>',
       t: '【未读】内测岗位确认函',
       body: `
-        <p>恭喜通过初筛。岗位：签约主厨（实习期）。</p>
+        <p>恭喜通过初筛。岗位：签约记录员（实习期）。</p>
         <p>公开编号规则：<span class="code">年份后两位 + 序号</span>。例如 2023 年第 64 位签约者是 <span class="code">2364</span>。</p>
-        <p>但入选「隐藏菜谱」方向的签约者不走公开序列，改用<b>内部编号</b>：</p>
-        <p>厨师服胸前会绣<b>两段数字</b>（形如 <span class="code">AB / CD</span>），
-           内部编号 = <span class="code">ABCD</span>，末尾追加 <span class="code">-AL</span>（主厨序列标记）。</p>
+        <p>但入选「未登记档案」方向的签约者不走公开序列，改用<b>内部编号</b>：</p>
+        <p>M.E.G. 制服胸牌上别着<b>两段数字</b>（形如 <span class="code">AB / CD</span>），
+           内部编号 = <span class="code">ABCD</span>，末尾追加 <span class="code">-AL</span>（记录员序列标记）。</p>
         <p>也就是说：看到两段数字就直接拼起来再加后缀，中间不要补任何符号。</p>
       `,
     },
@@ -105,7 +105,7 @@ function inboxFor(acctKey) {
       from: '签约审核中心 <audit@wqfws.local>',
       t: '内部：关于 Ellis 蒋的复核结论',
       body: `
-        <p>复核结论：通过。该厨师为「隐藏菜谱」持有人，共 108 条常规配方 + 6 条未公开配方。</p>
+        <p>复核结论：通过。该记录员为「未登记档案」持有人，共 108 条常规记录 + 6 条未登记记录。</p>
         <p>检索关键词：<span class="code">Hanyu</span>（内部仅用拼音代号登记）。</p>
         <p>档案库入口需要 Level A 权限。权限在维基主页连续点击标识 7 次后签发。</p>
       `,
@@ -118,6 +118,7 @@ function inboxFor(acctKey) {
 // 渲染
 // ------------------------------------------------------------
 let currentAccount = state.mailLoggedInAccount || null;
+let freezeTimer = null;
 
 function renderLogin() {
   el.accountStatus.textContent = '未登录';
@@ -147,7 +148,25 @@ function renderLogin() {
   $('#lg-pass').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
 }
 
+function freezeLeft() {
+  return Math.max(0, Math.ceil(((state.mailFrozenUntil || 0) - Date.now()) / 1000));
+}
+
+function showFreeze(sec) {
+  const m = $('#lg-msg');
+  if (m) {
+    m.textContent = sec > 0 ? `账号已被临时冻结 · ${sec} 秒后可重试` : '冻结已解除，可以重新登录。';
+    m.className = sec > 0 ? 'login-msg error' : 'login-msg';
+  }
+  if (freezeTimer) clearTimeout(freezeTimer);
+  if (sec <= 0) return;
+  freezeTimer = setTimeout(() => showFreeze(freezeLeft()), 1000);
+}
+
 function tryLogin() {
+  // 连错 3 次会临时冻结 —— 和直播间"三振出局"一致，不能无限试。
+  const frozen = freezeLeft();
+  if (frozen > 0) { showFreeze(frozen); return; }
   const u = $('#lg-user').value.trim().toLowerCase();
   const p = $('#lg-pass').value.trim();
   const issued = ACCOUNTS.issued();
@@ -161,9 +180,20 @@ function tryLogin() {
 }
 
 function loginFail(msg) {
+  const fails = (state.mailLoginFails || 0) + 1;
+  set('mailLoginFails', fails);
+  state.mailLoginFails = fails;      // 内存同步：state 是加载时的快照
+  if (fails >= 3) {
+    const until = Date.now() + 30000;
+    setMany({ mailFrozenUntil: until, mailLoginFails: 0 });
+    state.mailFrozenUntil = until;
+    state.mailLoginFails = 0;
+    showFreeze(30);
+    showToast('账号临时冻结', '连续 3 次凭据错误，30 秒后可重试。', 'error');
+    return;
+  }
   const m = $('#lg-msg');
-  if (m) { m.textContent = msg; m.className = 'login-msg error'; }
-  set('mailLoginFails', (state.mailLoginFails || 0) + 1);
+  if (m) { m.textContent = `${msg}（再错 ${3 - fails} 次将临时冻结）`; m.className = 'login-msg error'; }
 }
 
 function loginOk(key) {
@@ -171,7 +201,12 @@ function loginOk(key) {
   setMany({
     mailLoggedInAccount: key,
     zhouAccountUnlocked: key === 'zhou' ? true : state.zhouAccountUnlocked,
+    mailLoginFails: 0,          // 登录成功清零
+    mailFrozenUntil: 0,
   });
+  state.mailLoginFails = 0;
+  state.mailFrozenUntil = 0;
+  if (freezeTimer) { clearTimeout(freezeTimer); freezeTimer = null; }
   showToast('登录成功', key === 'zhou' ? '已登录内部员工邮箱。' : '已登录系统签发账号。', 'success');
   renderInbox();
 }

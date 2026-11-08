@@ -15,7 +15,7 @@ const JOBS = [
   { t: '层级巡检员', loc: 'Level 0 – Level 4', pay: '面议', tag: '轮班' },
   { t: '真菌农场技术员', loc: 'Level 1 · 农场区', pay: '面议', tag: '全职' },
   { t: '档案数字化实习生', loc: '远程', pay: '无薪', tag: '实习' },
-  { t: '签约主厨（隐藏菜谱方向）', loc: '保密', pay: '保密', tag: '内部推荐', hidden: true },
+  { t: '签约记录员（未登记档案方向）', loc: '保密', pay: '保密', tag: '内部推荐', hidden: true },
 ];
 
 let revealed = state.neworldRevealed || false;
@@ -99,7 +99,7 @@ function renderHidden() {
     <div class="section-title" style="margin-top:12px;">这一层不是招聘页面</div>
 
     <p class="stage-note">
-      如果你读到了这里，说明你已经收集过口令、信标名、主频和主厨编号，
+      如果你读到了这里，说明你已经收集过口令、信标名、主频和记录员编号，
       并且至少成功穿越了「内部邮箱 → 终端管道」这条链路。
     </p>
 
@@ -116,7 +116,7 @@ function renderHidden() {
       <li><b>时间门禁</b> —— 直播预约后需要等待 20 分钟才开场（或用帧 0 里的口令提前接入）；</li>
       <li><b>失败即剧情</b> —— 验证失败不是重来，而是被踢出，并"顺手"给你一个邮箱账号；</li>
       <li><b>不可逆的脱敏</b> —— 终端里第一次输错，grep 的模式就会被 <span class="redacted">██████</span> 覆盖，只能从 trace 反推；</li>
-      <li><b>分散的线索</b> —— 主频在执行页、信标名在音频轨、编号在厨师服胸前，三处分属不同阶段。</li>
+      <li><b>分散的线索</b> —— 主频在执行页、信标名在音频轨、编号在制服胸牌上，三处分属不同阶段。</li>
     </ul>
 
     <p class="stage-note">所以卡住是正常的。你被卡住的地方，就是设计者希望你回头再看一遍的地方。</p>

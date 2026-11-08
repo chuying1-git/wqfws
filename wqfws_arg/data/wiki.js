@@ -130,106 +130,109 @@ export const WIKI_ENTRIES = [
     id: 'hidden-ellis',
     title: '【机密】Ellis 蒋 - 档案编号 7341-AL',
     category: '机密档案',
-    tags: ['M.E.G. 绝密', '签约主厨', '隐藏人员'],
+    tags: ['M.E.G. 绝密', '签约记录员', '隐藏人员'],
     hidden: true,
     chefId: 'Ellis 蒋',
-    // 归一化后任一命中即可解锁（蒋 / Ellis / 主厨 / 7341-AL / 7341 …）
-    chefKeys: ['Ellis', '蒋', '主厨', '7341-AL', '7341', 'Ellis 蒋'],
+    // 归一化后任一命中即可解锁（蒋 / Ellis / 记录员 / 7341-AL / 7341 …）
+    chefKeys: ['Ellis', '蒋', '记录员', '7341-AL', '7341', 'Ellis 蒋'],
     content: `
       <h3>>>> 访问权限验证通过 <<<</h3>
       <p><strong>姓名：</strong>Ellis 蒋</p>
-      <p><strong>代号：</strong>「主厨」</p>
-      <p><strong>身份：</strong>M.E.G. 特别顾问 / Level 1 阿尔法基地「后厨」负责人</p>
-      <p><strong>备注：</strong>该人员不存在于任何公开名册中。其「菜谱」实为层级坐标加密载体。</p>
+      <p><strong>代号：</strong>「记录员」</p>
+      <p><strong>身份：</strong>M.E.G. 特别顾问 / Level 1「阿尔法基地」频段记录官</p>
+      <p><strong>备注：</strong>该人员不存在于任何公开名册中。其「公开记录」实为层级坐标加密载体。</p>
       <hr>
-      <p><strong>隐藏菜谱索引：</strong></p>
+      <p><strong>未登记档案索引：</strong></p>
       <ul>
-        <li>金牌蜜汁叉烧 → 坐标: 875Hz</li>
-        <li>砂锅焗鸡 → 频率锁定: 0.5s</li>
-        <li>清蒸鲈鱼 → 信标: ALMOND</li>
+        <li>875 载波记录 → 坐标: 875Hz</li>
+        <li>相位锁定记录 → 频率锁定: 0.5s</li>
+        <li>杏仁水信标记录 → 信标: ALMOND</li>
       </ul>
       <p style="color: #6dff9e; font-family: monospace;">ODc1</p>
-      <p class="hint">（提示：该人员的<strong>姓名</strong>、<strong>署名</strong>或<strong>档案编号</strong>，任一都能在检索框里查到他的全部隐藏菜谱）</p>
+      <p><strong>内部编号：</strong>7364-AL（制服胸牌 73 / 64，与档案编号 7341-AL 分属两套序列）</p>
+      <p><strong>内部编号：</strong>7364-AL（制服胸牌 73 / 64，与档案编号 7341-AL 分属两套序列）</p>
+      <p><strong>内部编号：</strong>7364-AL（制服胸牌 73 / 64，与档案编号 7341-AL 分属两套序列）</p>
+      <p class="hint">（提示：该人员的<strong>姓名</strong>、<strong>署名</strong>或<strong>档案编号</strong>，任一都能在检索框里查到他的全部未登记档案）</p>
     `
   },
   {
     id: 'hidden-recipe-1',
-    title: '【隐藏菜谱】金牌蜜汁叉烧',
-    category: '隐藏菜谱',
+    title: '【未登记档案】875 载波记录',
+    category: '未登记档案',
     tags: ['Ellis 蒋', '频率载体', '875Hz'],
     hidden: true,
     chefId: 'Ellis 蒋',
     content: `
-      <h3>金牌蜜汁叉烧</h3>
-      <p><strong>主厨：</strong>Ellis 蒋</p>
+      <h3>875 载波记录 · 频段采样日志</h3>
+      <p><strong>记录员：</strong>Ellis 蒋</p>
       <p><strong>上传时间：</strong>2026-06-13</p>
-      <p><strong>食材：</strong></p>
+      <p><strong>器材与材料：</strong></p>
       <ul>
-        <li>五花肉 500g（对应频率基波）</li>
-        <li>蜂蜜 3勺（调制深度 75%）</li>
-        <li>生抽 2勺（载波幅度）</li>
-        <li>料酒 1勺（相位偏移）</li>
-        <li>五香粉 适量（谐波抑制）</li>
+        <li>载波发生器 1 台（频率基波）</li>
+        <li>调制器 1 组（调制深度 75%）</li>
+        <li>衰减器 1 组（载波幅度）</li>
+        <li>移相器 1 组（相位偏移）</li>
+        <li>带阻滤波器（谐波抑制）</li>
       </ul>
-      <p><strong>做法：</strong></p>
+      <p><strong>作业流程：</strong></p>
       <ol>
-        <li>肉切条，按 8:7:5 比例腌制 <span class="cipher">ODc1</span> 分钟</li>
-        <li>200度烤 15 分钟，每 5 分钟刷一次蜜汁（模拟调频）</li>
-        <li>出炉静置 0.5 秒（锁相关键）</li>
+        <li>信号按 8:7:5 分帧，持续 <span class="cipher">ODc1</span> 分钟</li>
+        <li>每 15 分钟扫一遍频段，逐段留档（模拟调频）</li>
+        <li>停采静置 0.5 秒（锁相关键）</li>
       </ol>
       <p class="hint">核心参数：<span class="freq">875</span> | <span class="lock">0.5</span> | <span class="code">ALMOND</span></p>
     `
   },
   {
     id: 'hidden-recipe-2',
-    title: '【隐藏菜谱】砂锅焗鸡',
-    category: '隐藏菜谱',
+    title: '【未登记档案】相位锁定记录',
+    category: '未登记档案',
     tags: ['Ellis 蒋', '相位锁定', '0.5s'],
     hidden: true,
     chefId: 'Ellis 蒋',
     content: `
-      <h3>砂锅焗鸡</h3>
-      <p><strong>主厨：</strong>Ellis 蒋</p>
+      <h3>相位锁定记录 · 阿尔法基地</h3>
+      <p><strong>记录员：</strong>Ellis 蒋</p>
       <p><strong>上传时间：</strong>2026-06-14</p>
-      <p><strong>食材：</strong></p>
+      <p><strong>器材与材料：</strong></p>
       <ul>
-        <li>鸡块 500g（信号源）</li>
-        <li>沙姜 1块（滤波器）</li>
-        <li>葱段 适量（天线阵列）</li>
-        <li>生抽 2勺（增益）</li>
-        <li>米酒 1勺（相位参考）</li>
+        <li>信号源 1 路</li>
+        <li>带通滤波器 1 组</li>
+        <li>天线阵列 1 组</li>
+        <li>前置增益 ×2</li>
+        <li>相位参考 1 路</li>
       </ul>
-      <p><strong>做法：</strong></p>
+      <p><strong>作业流程：</strong></p>
       <ol>
-        <li>腌制 20 分钟（预热稳频）</li>
-        <li>中火焗 12 分钟，盖缝有白气向外找路时补油（相位跟踪）</li>
-        <li>关火焖 5 分钟，等锅盖不再抖动（锁相完成）</li>
+        <li>预热稳频 20 分钟</li>
+        <li>跟踪 12 分钟，读数出现漂移就补一次校正（相位跟踪）</li>
+        <li>静置 5 分钟，等读数不再抖动（锁相完成）</li>
       </ol>
       <p class="hint">关键窗口：<span class="lock">0.5s</span> 相位锁定容差</p>
     `
   },
   {
     id: 'hidden-recipe-3',
-    title: '【隐藏菜谱】清蒸鲈鱼',
-    category: '隐藏菜谱',
+    title: '【未登记档案】杏仁水信标记录',
+    category: '未登记档案',
     tags: ['Ellis 蒋', '信标码', 'ALMOND'],
     hidden: true,
     chefId: 'Ellis 蒋',
     content: `
-      <h3>清蒸鲈鱼</h3>
-      <p><strong>主厨：</strong>Ellis 蒋</p>
+      <h3>杏仁水信标记录 · Level 1</h3>
+      <p><strong>记录员：</strong>Ellis 蒋</p>
       <p><strong>上传时间：</strong>2026-04-01</p>
-      <p><strong>食材：</strong></p>
+      <p><strong>器材与材料：</strong></p>
       <ul>
-        <li>鲈鱼 1条（载体）</li>
-        <li>葱 2根、姜 1块（调制参考）</li>
-        <li>蒸鱼豉油 3勺（标记液）</li>
+        <li>载体 1 件（杏仁水瓶）</li>
+        <li>调制参考 2 路</li>
+        <li>标记液 3 份</li>
       </ul>
-      <p><strong>做法：</strong></p>
+      <p><strong>作业流程：</strong></p>
       <ol>
-        <li>鱼身划刀，葱姜铺底（阻抗匹配）</li>
-        <li>水开上鱼，大火蒸 8 分钟，关火虚蒸 2 分钟</li>
-        <li>倒掉蒸鱼水，铺新葱丝，淋热油——听到短促响声立即盖盖（信标触发）</li>
+        <li>瓶身刻痕对齐，底座铺平（阻抗匹配）</li>
+        <li>上电 8 分钟，静置 2 分钟</li>
+        <li>换新标记液，加压——听到短促响声立即封盖（信标触发）</li>
       </ol>
       <p class="hint">信标确认码：<span class="code">ALMOND</span></p>
     `
@@ -246,7 +249,7 @@ export const WIKI_ENTRIES = [
     content: `
       <h3>>>> LEVEL A CLEARANCE REQUIRED <<<</h3>
       <p><strong>项目代号：</strong>归家计划</p>
-      <p><strong>平台编号：</strong>厨EMA 12609号</p>
+      <p><strong>平台编号：</strong>NW-12609 号</p>
       <p><strong>中文域名：</strong>新世界.服务</p>
       <hr>
       <p><strong>居民登记口径（2012版）：</strong></p>

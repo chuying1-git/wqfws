@@ -39,6 +39,7 @@ const DEFAULT_STATE = {
   mailViaKick: false,             // account was issued by the kick procedure
   mailRead: [],                   // ids of opened mails
   mailLoginFails: 0,              // failed login attempts
+  mailFrozenUntil: 0,             // 连错 3 次后临时冻结的截止时间戳
   mailSentCount: 0,               // mails sent
   archiveNoticeRead: false,       // read the "session archived" notice
   

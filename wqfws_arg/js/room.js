@@ -129,8 +129,8 @@ const PHASE_SCRIPT = [
   // Phase 1 —— 正常帧：藏 875
   () => {
     el.video.className = '';
-    addFrame('【画面】主播在操作台前，背景是白色的厨房。');
-    setTimeout(() => addFrame('【画面】厨师服特写，胸前绣着两段数字：<b class="cipher">73</b> / <b class="cipher">64</b>，中间没有连字符。'), 4000);
+    addFrame('【画面】主播坐在信号台前，背后是 Level 0 的黄色墙纸与湿地毯。');
+    setTimeout(() => addFrame('【画面】M.E.G. 制服胸牌特写，别着两段数字：<b class="cipher">73</b> / <b class="cipher">64</b>，中间没有连字符。'), 4000);
     setTimeout(() => addFrame('【画面】频谱仪只吐原始采样（二进制）：<span class="code">1101101011</span>。仪表盘上那个 <b>857</b> 是上一场的残留读数，别抄。'), 8000);
   },
   // Phase 2 —— 全黑 + 音频：藏 ALMOND / base64
@@ -147,7 +147,7 @@ const PHASE_SCRIPT = [
     el.video.classList.remove('blackout-frame');
     addFrame('【画面恢复】标识颜色异常：金色 → 暗红。');
     setTimeout(() => addFrame('【聊天区】检测到发言者身份标记：<span class="hidden-badge">机密</span>'), 2500);
-    setTimeout(() => addFrame('【画面】厨师服背面印着一行规则：内部编号 = 前两位 · 后两位（完整说明在招聘邮件里）。'), 4000);
+    setTimeout(() => addFrame('【画面】制服背面印着一行规则：内部编号 = 前两位 · 后两位（完整说明在招聘邮件里）。'), 4000);
     setTimeout(() => addFrame('【系统】请勿在弹幕中直接发送完整信标。'), 5800);
   },
   // Phase 4 —— 最终循环 / 两步验证
@@ -235,7 +235,7 @@ function showStep3() {
   const box = $('#verify-box');
   box.innerHTML = `
     <div class="verify-title">身份复核 · 第 3 步 / 共 3 步</div>
-    <div class="verify-sub">请输入该主厨的内部编号。厨师服上只有两段数字，拼接规则见招聘邮件（内部编号 = 前两位 · 后两位，后接 -AL）。</div>
+    <div class="verify-sub">请输入该记录员的内部编号。制服胸牌上只有两段数字，拼接规则见招聘邮件（内部编号 = 前两位 · 后两位，后接 -AL）。</div>
     <input class="input-field" id="v3" placeholder="内部编号" style="text-transform:uppercase;">
     <button class="send-btn" id="v3-go" style="width:100%;margin-top:8px;">提交</button>
     <div class="verify-msg" id="v3-msg"></div>
@@ -281,12 +281,23 @@ async function failVerify(reason) {
         <span class="code">${uname}</span> / <span class="code">${pwd}</span><br>
         <small style="color:var(--fg-dim);">（异常断开的会话会被归档，并收到一封说明邮件。）</small>
       </div>
-      <div style="margin-top:16px;">
+      <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <button class="send-btn" id="copy-cred" style="padding:10px 18px;background:var(--bg-elevated);color:var(--fg);border:1px solid var(--border);">复制账号密码</button>
         <button class="send-btn" id="to-mail" style="padding:10px 18px;">前往内部邮箱 →</button>
       </div>
     </div>`;
   // 跨页：router 会退化成整页跳转
   $('#to-mail').addEventListener('click', () => navigate('mail.html'));
+  // 这串账号是随机的（obs_xxxxx），手抄很容易错，给个一键复制
+  $('#copy-cred').addEventListener('click', async () => {
+    const cred = `${uname} / ${pwd}`;
+    try {
+      await navigator.clipboard.writeText(cred);
+      showToast('已复制', '账号与密码已复制到剪贴板。', 'success');
+    } catch (e) {
+      showToast('请手动复制', cred, 'info');
+    }
+  });
   showToast('会话已断开', '系统已为你创建内部邮箱账号，请前往邮箱查看归档说明。', 'error');
   initNav({ ...state, mailCreated: true });
 }
@@ -331,7 +342,7 @@ function succeed() {
     <div class="gate-screen" style="min-height:260px;">
       <div class="gate-icon">✅</div>
       <h2 class="gate-title">身份复核通过</h2>
-      <p style="color:var(--fg-muted);font-size:13px;">签约主厨 Ellis 蒋（编号 7364-AL）身份确认。</p>
+      <p style="color:var(--fg-muted);font-size:13px;">签约记录员 Ellis 蒋（编号 7364-AL）身份确认。</p>
       <div class="gate-hint" style="text-align:left;">
         直播结束。你的会话被保留，并收到一封内部归档邮件。<br>
         下一步：打开内部邮箱，处理那封「归档说明」。
@@ -344,7 +355,7 @@ function succeed() {
   if (!state.mailUsername) {
     setMany({ mailUsername: 'ellis_guest@wqfws.local', mailPassword: '7364' });
   }
-  showToast('复核通过', '主厨身份已确认。请前往内部邮箱处理归档邮件。', 'success');
+  showToast('复核通过', '记录员身份已确认。请前往内部邮箱处理归档邮件。', 'success');
   initNav({ ...state, mailCreated: true });
 }
 
