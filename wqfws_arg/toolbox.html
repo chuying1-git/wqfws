@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#020604" />
+<meta name="robots" content="noindex" />
+<title>WQFWS://SECRET-ARCHIVE · 工具台</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23020604'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='%236dff9e' font-family='monospace'%3E%3E_%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="css/original.css" />
+<link rel="stylesheet" href="css/arg.css" />
+</head>
+<body>
+  <div class="screen">
+    <div class="scanlines"></div>
+    <div class="sweep"></div>
+
+    <div class="content">
+      <div class="topline">
+        <span>WQFWS://SECRET-ARCHIVE <span class="badge">TOOLBOX</span></span>
+        <span class="status"><i></i><span id="tb-status">LOCAL · 全部在你的浏览器里算</span></span>
+      </div>
+
+      <p class="tagline">M.E.G. 工具台 · <b>它只帮你换算，不帮你思考</b></p>
+
+      <div class="meta">
+        <span>USER: guest</span>
+        <span>NODE: toolbox</span>
+        <span>CLEARANCE: TOOL</span>
+      </div>
+
+      <div class="stations" id="arg-nav"></div>
+
+      <div class="stage-card" style="margin-top:18px;">
+        <div class="stage-hd">
+          <span class="grow">编解码台 · base64 / 十六进制</span>
+          <span class="prog" id="tb-prog">IDLE</span>
+        </div>
+        <div class="stage-bd">
+
+          <p class="stage-note">
+            有人在档案里留过一串看不懂的字符，也有人在图片尾巴、元数据、控制台里留过。这里是换算的地方 ——
+            <b>不联网、不上传、不记录</b>，所有字节都在你这台机器上处理。<br>
+            它<b>不会</b>告诉你该解哪一段，也<b>不会</b>替你判断某串东西是什么。它没有位移密码，
+            也没有任何"智能猜测" —— 那类东西自己算，是这份档案的一部分。
+          </p>
+
+          <label class="field-label" for="tb-in">输入</label>
+          <textarea class="input-field" id="tb-in" rows="5" spellcheck="false"
+                    placeholder="把那段东西粘进来（可以带引号、换行、data: 前缀，它自己会清理）"></textarea>
+
+          <div class="tb-btns">
+            <button class="submit-btn" id="tb-b64d" type="button">base64 解码</button>
+            <button class="btn ghost" id="tb-b64e" type="button">base64 编码</button>
+            <button class="btn ghost" id="tb-hexd" type="button">十六进制 → 文本</button>
+            <button class="btn ghost" id="tb-hexe" type="button">文本 → 十六进制</button>
+            <button class="btn ghost" id="tb-clear" type="button">清空</button>
+          </div>
+
+          <label class="field-label">输出</label>
+          <div class="tb-out" id="tb-out"><span class="tb-dim">还没算过。</span></div>
+          <div class="tb-actions" id="tb-actions"></div>
+          <div class="tb-msg" id="tb-msg"></div>
+
+          <div class="tb-hist" id="tb-hist"></div>
+        </div>
+      </div>
+
+      <div class="foot">工具台 · 离线运行 · <span class="code">wqfws-arg-state-v1</span></div>
+    </div>
+  </div>
+
+  <script type="module" src="js/toolbox.js"></script>
+  <script src="js/trace.js" data-page="工具台" data-trace="工具台不解释任何东西。它只把字节换成你能读的东西 —— 剩下的还是你自己想。"></script>
+</body>
+</html>

@@ -465,6 +465,57 @@
 .small { font-size: 11.5px; padding: 6px 12px; }
 .terminal-main { max-width: 100%; }
 
+/* ---------- 工具台 ---------- */
+.tb-btns { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
+.tb-btns .submit-btn { margin-top: 0; }
+.tb-out {
+  min-height: 46px;
+  padding: 12px 14px;
+  border: 1px solid var(--g-faint);
+  border-radius: 8px;
+  background: #02100b;
+  font-size: 12.5px;
+  color: var(--g);
+  overflow-x: auto;
+}
+.tb-dim { color: rgba(109, 255, 158, 0.35); }
+.tb-pre {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--g-bright);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.tb-hex { color: var(--g-dim); }
+.tb-meta { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--g-faint); font-size: 11px; color: rgba(109, 255, 158, 0.45); }
+.tb-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.tb-actions .btn { font-size: 11.5px; padding: 6px 12px; }
+.tb-msg { margin-top: 10px; font-size: 12px; color: var(--g-dim); line-height: 1.9; }
+.tb-msg.err { color: var(--red); }
+.tb-hist { margin-top: 6px; }
+.tb-hitem {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  width: 100%;
+  text-align: left;
+  padding: 7px 10px;
+  margin-top: 6px;
+  border: 1px dashed var(--g-faint);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--g-dim);
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.tb-hitem:hover { background: rgba(109, 255, 158, 0.05); }
+.tb-hlabel { color: rgba(109, 255, 158, 0.5); white-space: nowrap; }
+.tb-hsum { color: var(--g-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* ===== 页内样式（_apply_shell.mjs 自动搬移，勿手改） ===== */
 /* ---- page: room.html ---- */
 /* Video Stream Overlay Styles */

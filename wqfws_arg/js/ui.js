@@ -100,6 +100,8 @@ export const ARG_PAGES = [
   { href: 'cipher.html',   ico: '🔑', name: '05 · 密钥本',   desc: '维吉尼亚表 · 错行',   need: s => s.cipherBookUnlocked },
   { href: 'smiler.html',   ico: '🙂', name: '06 · 笑魇档案', desc: '图里藏了三层',       need: s => s.pipelineSolved },
   { href: 'archive.html',  ico: '🗄️', name: '07 · 机密档案', desc: '觉醒之后',           need: s => s.awakened },
+  // 工具台：不设门槛（哪天在图片尾巴/元数据/控制台里撞见一串字节，随时能来换算）
+  { href: 'toolbox.html',  ico: '🧰', name: '工具台',        desc: 'base64 · 十六进制 · 本地运算', need: () => true },
   { href: 'level-a.html',  ico: '🚪', name: '08 · LEVEL A',  desc: '门禁 · 口令',        need: s => s.gatekeeperFound, hidden: true },
 ];
 
