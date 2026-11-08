@@ -7,12 +7,10 @@
 //      也没有自动猜编码 —— 那些属于档案本身，得玩家自己算。
 //    · 不联网。atob/btoa 都在本地，输入不会离开浏览器。
 //    · 不做任何"该解哪一段"的提示。
+//    · 【没有站点导航】工具台不带你走任何地方：它不渲染站点列表、不链回 ARG 主页。
+//      想进 ARG，只能靠你自己把该解的东西解出来。
 // ============================================================
-import { loadState } from '../state.js';
-import { $, esc, showToast, renderStations } from './ui.js';
-
-const state = loadState();
-renderStations($('#arg-nav'), state, 'toolbox.html');
+import { $, esc, showToast } from './ui.js';
 
 const IN = $('#tb-in');
 const OUT = $('#tb-out');

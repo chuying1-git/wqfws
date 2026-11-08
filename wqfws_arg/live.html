@@ -110,18 +110,12 @@
     const reserveStatus = document.getElementById('reserve-status');
     const enterRoomBtn = document.getElementById('enter-room-btn');
     const secretHint = document.getElementById('secret-hint');
-    const mailNavLink = document.getElementById('mail-nav-link');
-    const terminalNavLink = document.getElementById('terminal-nav-link');
-    const archiveNavLink = document.getElementById('archive-nav-link');
     
     let countdownInterval = null;
     const TOTAL_WAIT = 1200000; // 20 minutes
     
     function updateNav() {
       renderStations(document.getElementById('arg-nav'), state, 'live.html');
-      mailNavLink.style.display = state.mailCreated ? 'inline-block' : 'none';
-      terminalNavLink.style.display = state.pipelineUnlocked ? 'inline-block' : 'none';
-      archiveNavLink.style.display = state.awakened ? 'inline-block' : 'none';
     }
     
     function formatTime(ms) {
@@ -192,6 +186,7 @@
     
     enterRoomBtn.addEventListener('click', () => {
       set('liveRoomEntered', true);
+      // 跨页：router 会退化成整页跳转
       navigate('room.html');
     });
     

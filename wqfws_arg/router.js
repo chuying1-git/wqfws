@@ -24,6 +24,14 @@ export function navigate(path, pushState = true) {
   
   const handler = routes.get(path);
   if (!handler) {
+    // 这是多页站点：每个页面各自 import 本模块，routes 里只会有"自己那一条"。
+    // 跨页目标（live.html / room.html / mail.html …）永远查不到 handler，
+    // 以前这里只 warn 一句就 return —— 按钮就变成了死的。
+    // 现在退化成整页跳转：SPA 的 pushState 只在同页路由（有 handler）时使用。
+    if (/\.html($|[?#])/.test(path)) {
+      window.location.href = path;
+      return;
+    }
     console.warn('No route for:', path);
     return;
   }

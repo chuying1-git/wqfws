@@ -285,6 +285,7 @@ async function failVerify(reason) {
         <button class="send-btn" id="to-mail" style="padding:10px 18px;">前往内部邮箱 →</button>
       </div>
     </div>`;
+  // 跨页：router 会退化成整页跳转
   $('#to-mail').addEventListener('click', () => navigate('mail.html'));
   showToast('会话已断开', '系统已为你创建内部邮箱账号，请前往邮箱查看归档说明。', 'error');
   initNav({ ...state, mailCreated: true });
