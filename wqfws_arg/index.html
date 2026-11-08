@@ -207,15 +207,24 @@
       }
       searchResults.classList.add('open');
       
-      // Check for hidden entry unlock
-      if (query.toLowerCase() === 'ellis 蒋' && !state.hiddenEntryUnlocked) {
+      // 隐藏档案解锁：判定依据是**检索结果本身**，不是把玩家输入的字符串再比一次。
+      // （以前这里是 query === 'ellis 蒋' 的精确等值，于是点红框搜「蒋」「7341-AL」
+      //   时档案能开出来、状态却永远不置上 → 01 登记一直显示未开放。）
+      const hitHiddenChef = results.some(r => r.hidden && r.chefId);
+      if (hitHiddenChef && !state.hiddenEntryUnlocked) {
         set('hiddenEntryUnlocked', true);
-        showToast('隐藏档案解锁', '检测到签约主厨 Ellis 蒋。隐藏菜谱档案已加载。', 'warning');
+        state.hiddenEntryUnlocked = true;   // 立刻让导航的 need() 看到
         renderWikiGrid();
+        updateNavVisibility();              // 以前漏了这句：导航栏不刷新，得手动 F5
+        showToast(
+          '隐藏档案解锁',
+          '签约主厨 Ellis 蒋的档案与全部隐藏菜谱已加载 —— 导航栏「01 · 登记」已开放。',
+          'warning'
+        );
       }
       
       // 密钥本：第二条入手路径（第一条是导播组误发的邮件）
-      if (query.trim() === '密钥本' && !state.cipherBookUnlocked) {
+      if (query.replace(/\s+/g, '') === '密钥本' && !state.cipherBookUnlocked) {
         set('cipherBookUnlocked', true);
         state.cipherBookUnlocked = true;
         updateNavVisibility();
