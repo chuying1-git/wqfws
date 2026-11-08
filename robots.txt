@@ -8,4 +8,4 @@ Allow: /
 
 # 三个合作者索引：wqfws / radio / gatekeeper
 # 只有一个从未出现在任何页面上。
-Sitemap: https://wqfws.chuying1-git.github.io/wqfws/wqfws_arg/sitemap.xml
+Sitemap: https://chuying1-git.github.io/wqfws/wqfws_arg/sitemap.xml
