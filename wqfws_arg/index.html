@@ -40,7 +40,7 @@
       </div>
 
       <div class="search-area">
-        <input type="text" class="search-input" id="search-input" placeholder="搜索层级、实体、物品、组织..." autocomplete="off" spellcheck="false">
+        <input type="text" class="search-input" id="search-input" placeholder="搜索层级、实体、物品、组织、人员姓名、档案编号..." autocomplete="off" spellcheck="false">
         <div class="search-results" id="search-results"></div>
       </div>
 
@@ -54,8 +54,9 @@
     <!-- Default: Wiki Home -->
     <div id="wiki-home" class="wiki-home">
       <div class="search-hint">
-        <strong>💡 搜索提示：</strong> 支持按标题、分类、标签搜索。<br>
-        <strong>隐藏机制：</strong> 精准输入特定 <code>Chef ID</code> 可解锁隐藏档案。
+        <strong>💡 搜索提示：</strong> 支持标题、分类、标签，以及<strong>人员姓名</strong>和<strong>档案编号</strong>。<br>
+        <strong>撤档条目：</strong> 正文里带红框的索引表示该条目已被上级撤下 —— 点一下红框就替你检索。<br>
+        <strong>查不到：</strong> 说明它不在公开层。不是所有东西都留在名册上。
       </div>
       
       <div class="wiki-grid" id="wiki-grid"></div>
@@ -177,6 +178,18 @@
       }
     });
     
+    // 撤档条目的红框索引：点一下就替玩家填好检索词并出结果
+    document.addEventListener('click', (e) => {
+      const rl = e.target.closest('.redlink');
+      if (!rl) return;
+      e.preventDefault();
+      const q = (rl.dataset.q || rl.textContent || '').trim();
+      if (!q) return;
+      searchInput.value = q;
+      performSearch(q);
+      searchInput.focus();
+    });
+
     function performSearch(query) {
       const results = searchWiki(query, state);
       if (results.length === 0) {

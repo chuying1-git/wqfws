@@ -1022,6 +1022,24 @@
       font-size: 13px;
       color: var(--fg-muted);
     }
+
+/* ---- 撤档条目的红框索引（wiki 红链）：可点，替玩家检索 ---- */
+.redlink {
+  color: var(--amber);
+  border-bottom: 1px dashed var(--amber);
+  cursor: help;
+  padding: 0 2px;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.redlink:hover,
+.redlink:focus {
+  color: var(--bg);
+  background: var(--amber);
+  border-bottom-color: var(--amber);
+}
+.redlink::before { content: '［'; opacity: .45; }
+.redlink::after  { content: '］'; opacity: .45; }
+
     .search-hint code { background: var(--accent-dim); color: var(--accent); }
     
     .logo-click-hint {

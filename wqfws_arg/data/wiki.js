@@ -106,6 +106,10 @@ export const WIKI_ENTRIES = [
         <li>新人引导与救援</li>
         <li>实体研究与威胁评级</li>
       </ul>
+      <h3>人事科</h3>
+      <p>本站人员档案由人事科维护。最近一次同步停在「撤档行动」之前 —— 有两条索引没被清干净：</p>
+      <p class="hint">残留索引：<span class="redlink" data-q="7341-AL" title="点击检索该编号">7341-AL</span>
+        （撤档前最后一位修订人署名：<span class="redlink" data-q="蒋" title="点击检索该署名">蒋</span>）</p>
     `
   },
   {
@@ -129,6 +133,8 @@ export const WIKI_ENTRIES = [
     tags: ['M.E.G. 绝密', '签约主厨', '隐藏人员'],
     hidden: true,
     chefId: 'Ellis 蒋',
+    // 归一化后任一命中即可解锁（蒋 / Ellis / 主厨 / 7341-AL / 7341 …）
+    chefKeys: ['Ellis', '蒋', '主厨', '7341-AL', '7341', 'Ellis 蒋'],
     content: `
       <h3>>>> 访问权限验证通过 <<<</h3>
       <p><strong>姓名：</strong>Ellis 蒋</p>
@@ -143,7 +149,7 @@ export const WIKI_ENTRIES = [
         <li>清蒸鲈鱼 → 信标: ALMOND</li>
       </ul>
       <p style="color: #6dff9e; font-family: monospace;">ODc1</p>
-      <p class="hint">（提示：搜索框输入准确 Chef ID 可解锁该人员全部隐藏菜谱）</p>
+      <p class="hint">（提示：该人员的<strong>姓名</strong>、<strong>署名</strong>或<strong>档案编号</strong>，任一都能在检索框里查到他的全部隐藏菜谱）</p>
     `
   },
   {
@@ -289,21 +295,23 @@ export const WIKI_ENTRIES = [
 
 // Search function used by wiki
 export function searchWiki(query, state) {
-  const q = query.trim().toLowerCase();
-  if (!q) return WIKI_ENTRIES.filter(e => !e.hidden);
-  
-  // Chef ID exact match unlocks hidden recipes
-  const matchedChef = WIKI_ENTRIES.find(e => 
-    e.hidden && e.chefId && e.chefId.toLowerCase() === q
-  );
-  
+  const q = query.trim();
+  // 归一化：忽略大小写、空格、连字符 —— 让"姓名/署名/代号/编号"任一都能命中
+  // （以前是精确等值，必须一字不差打 "Ellis 蒋"，玩家根本猜不到）
+  const nq = q.toLowerCase().replace(/[\s\-_·.、]+/g, '');
+  if (!nq) return WIKI_ENTRIES.filter(e => !e.hidden);
+
+  // 隐藏档案：chefId 或 chefKeys 里任一归一化后等于检索词 → 解锁该人员全部条目
+  const hitsChef = e => {
+    if (!e.hidden || !e.chefId) return false;
+    return [e.chefId, ...(e.chefKeys || [])]
+      .some(k => k.toLowerCase().replace(/[\s\-_·.、]+/g, '') === nq);
+  };
+  const matchedChef = WIKI_ENTRIES.find(hitsChef);
   if (matchedChef) {
-    // Unlock all entries with this chefId
-    return WIKI_ENTRIES.filter(e => 
-      e.hidden && e.chefId && e.chefId.toLowerCase() === q
-    );
+    return WIKI_ENTRIES.filter(e => e.hidden && e.chefId === matchedChef.chefId);
   }
-  
+
   // Normal search (excludes hidden unless awakened)
   const awakened = state?.awakened || false;
   return WIKI_ENTRIES.filter(e => {
