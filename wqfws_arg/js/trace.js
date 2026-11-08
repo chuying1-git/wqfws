@@ -26,3 +26,32 @@
     localStorage.setItem(k, JSON.stringify(seen));
   } catch (e) {}
 })();
+
+/* ---------- 版本水印 ---------- */
+/* build.js 由 _dev/build_upload.mjs 按"内容指纹"生成（内容没变就不动）。
+   右下角一行 + 控制台一行，用来一眼确认线上跑的是哪一版。
+   trace.js 是全部 12 个页面都会加载的脚本，所以放这里；取不到就静默跳过。 */
+(function () {
+  if (typeof window === 'undefined' || typeof document === 'undefined' || !window.fetch) return;
+  fetch('build.js', { cache: 'no-store' })
+    .then(function (r) { return r && r.ok ? r.text() : ''; })
+    .then(function (t) {
+      if (!t) return;
+      var fp = /BUILD\s*=\s*'([0-9a-f]+)'/.exec(t);
+      var at = /BUILT_AT\s*=\s*'([^']+)'/.exec(t);
+      if (!fp) return;
+      var tag = at ? fp[1] + ' · ' + at[1] : fp[1];
+      try { console.log('%cWQFWS ARG · build ' + tag, 'color:#6dff9e;font-family:monospace'); } catch (e) {}
+      var put = function () {
+        if (!document.body || document.getElementById('build-stamp')) return;
+        var el = document.createElement('div');
+        el.id = 'build-stamp';
+        el.className = 'build-stamp';
+        el.textContent = 'build ' + fp[1];
+        el.title = 'WQFWS ARG · build ' + tag;
+        document.body.appendChild(el);
+      };
+      if (document.body) put(); else document.addEventListener('DOMContentLoaded', put);
+    })
+    .catch(function () {});
+})();

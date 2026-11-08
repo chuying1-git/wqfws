@@ -248,3 +248,7 @@ IN.addEventListener('keydown', e => {
 });
 
 IN.focus();
+
+// 媒体取证台（字节 / PNG 块 / 文件尾 / 频谱 / 像素位读取）。
+// 用动态 import：即使这个模块缺失，编解码台也照常能用。
+import('./media.js').then((m) => m.initMedia()).catch(() => {});

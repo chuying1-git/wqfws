@@ -64,6 +64,30 @@
         </div>
       </div>
 
+      <div class="stage-card" style="margin-top:18px;">
+        <div class="stage-hd">
+          <span class="grow">媒体取证台 · 字节 / PNG 块 / 文件尾 / 频谱 / 像素位</span>
+          <span class="prog" id="tb-media-prog">LOCAL</span>
+        </div>
+        <div class="stage-bd">
+
+          <p class="stage-note">
+            相当于把 xxd、exiftool、Audacity 塞进同一个页面 —— 全部在你机器上算，
+            <b>不上传、不联网、不记录</b>。<br>
+            它<b>只提供能力，不给结论</b>：通道、起始位、长度这些参数要你自己填，
+            它不会替你猜哪一段是答案。
+          </p>
+
+          <div class="drop-zone" id="drop-zone">
+            <input type="file" id="file-input" hidden />
+            <button class="btn ghost" id="file-pick" type="button">选择文件</button>
+            <span class="mono file-info" id="file-info">未选择文件 —— 也可以直接把文件拖到这里</span>
+          </div>
+
+          <div class="media-report" id="media-report"></div>
+        </div>
+      </div>
+
       <div class="foot">工具台 · 离线运行 · <b>不导航、不记录、不上传</b> · 它不带你走任何地方</div>
     </div>
   </div>

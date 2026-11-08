@@ -1122,3 +1122,246 @@
     }
     .notification-bubble.visible { animation: bounce-in 0.4s ease; }
 /* ===== 页内样式结束 ===== */
+
+/* ===== 版本水印（build.js 内容指纹，见 _dev/build_upload.mjs） ===== */
+.build-stamp {
+  position: fixed;
+  right: 8px;
+  bottom: 6px;
+  z-index: 40;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--fg-dim);
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ===== 工具台 · 媒体取证台 ===== */
+.drop-zone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  background: rgba(109, 255, 158, 0.03);
+  transition: border-color 0.15s, background 0.15s;
+}
+.drop-zone.over {
+  border-color: var(--g);
+  background: rgba(109, 255, 158, 0.09);
+}
+.file-info {
+  font-size: 12px;
+  color: var(--fg-dim);
+}
+.media-report {
+  display: block;
+}
+.media-empty {
+  padding: 14px;
+  font-size: 13px;
+  color: var(--fg-dim);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+.media-sec {
+  margin: 14px 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.media-sec-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  color: var(--g);
+  background: rgba(109, 255, 158, 0.05);
+  border-bottom: 1px solid var(--border);
+}
+.media-note {
+  color: var(--fg-dim);
+  font-size: 11px;
+}
+.media-sec-body {
+  padding: 12px;
+}
+.media-kv {
+  font-size: 12px;
+  line-height: 1.9;
+  color: var(--fg-muted);
+}
+.media-sub {
+  margin: 10px 0 4px;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: var(--cyan);
+}
+.media-pre {
+  margin: 0;
+  padding: 10px;
+  max-height: 320px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--g-bright);
+  background: var(--g-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.hexdump {
+  margin: 0;
+  padding: 10px;
+  max-height: 300px;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.55;
+  white-space: pre;
+  color: var(--g);
+  background: var(--g-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.png-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.png-table th {
+  text-align: left;
+  padding: 6px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  color: var(--fg-dim);
+  border-bottom: 1px solid var(--border);
+}
+.png-table td {
+  padding: 6px 8px;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(109, 255, 158, 0.08);
+  color: var(--fg-muted);
+}
+.png-text {
+  margin-top: 4px;
+}
+.png-key {
+  color: var(--amber);
+  margin-right: 6px;
+}
+.tail-box {
+  display: block;
+}
+.tail-b64 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 4px 0;
+}
+.tail-b64 code {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--g-bright);
+  word-break: break-all;
+}
+.b64-out {
+  margin-top: 6px;
+  border-color: var(--g);
+}
+.mini-btn {
+  padding: 4px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--g);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.mini-btn:hover {
+  color: var(--g-bg);
+  background: var(--g);
+  border-color: var(--g);
+}
+.mini-btn.go {
+  border-color: var(--g);
+}
+.mini-input {
+  padding: 3px 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--g-bright);
+  background: var(--g-bg);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+}
+.lsb-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--fg-dim);
+}
+.spec-wrap {
+  display: block;
+}
+.spec-axis {
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--fg-dim);
+}
+.spec-axis + canvas,
+#spec-canvas {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  image-rendering: pixelated;
+  cursor: crosshair;
+}
+.diff-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.diff-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--g-bg);
+  image-rendering: pixelated;
+}
+.diff-zoom {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-bottom: 8px;
+  border: 1px solid var(--g);
+  border-radius: 6px;
+  image-rendering: pixelated;
+}
+.diff-out {
+  margin-top: 4px;
+}.diff-file {
+  max-width: 260px;
+}

@@ -40,6 +40,8 @@ const DEFAULT_STATE = {
   mailRead: [],                   // ids of opened mails
   mailLoginFails: 0,              // failed login attempts
   mailFrozenUntil: 0,             // 连错 3 次后临时冻结的截止时间戳
+  roomCooldownUntil: 0,           // 直播间复核答错的冷却截止时间戳
+  roomFails: 0,                   // 复核累计答错次数
   mailSentCount: 0,               // mails sent
   archiveNoticeRead: false,       // read the "session archived" notice
   

@@ -198,9 +198,10 @@ function showStep1() {
       const d = parseInt(raw, 2);
       if (!Number.isNaN(d)) v = String(d);
     }
+    if (cooldownLeft() > 0) return paintCooldown(1, '');
     if (v === '875') { set('freqDecoded', true); showStep2(); }
-    else if (v === '857') failVerify('那是上一场的残留读数。直播间将在 5 秒后重置你的会话。');
-    else failVerify('频率不符。直播间将在 5 秒后重置你的会话。');
+    else if (v === '857') startCooldown(1, '那是上一场的残留读数。');
+    else startCooldown(1, '频率不符。');
   };
   $('#v1-go').addEventListener('click', go);
   $('#v1').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
@@ -222,9 +223,10 @@ function showStep2() {
     if (/^[A-Za-z0-9+/=]+$/.test(raw) && raw.length > 8) {
       try { const dec = atob(raw); if (/^[A-Z]+$/.test(dec)) v = dec.toUpperCase(); } catch (_) {}
     }
+    if (cooldownLeft() > 0) return paintCooldown(2, '');
     if (v === 'NYZBAQ') v = 'ALMOND';            // 允许直接填位移后的形式
     if (v === 'ALMOND') { set('beaconDecoded', true); showStep3(); }
-    else failVerify('信标校验失败。已记录本次访问。');
+    else startCooldown(2, '信标校验失败。');
   };
   $('#v2-go').addEventListener('click', go);
   $('#v2').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
@@ -242,9 +244,10 @@ function showStep3() {
   `;
   const go = () => {
     const v = $('#v3').value.trim().toUpperCase().replace(/\s+/g, '');
+    if (cooldownLeft() > 0) return paintCooldown(3, '');
     const ok = ['7364', '7364-AL', '7364AL', '73-64', '73/64'].includes(v);
     if (ok) { set('idDecoded', true); succeed(); }
-    else failVerify('编号不符。三次里错一次就会断开，这是设计的一部分。');
+    else startCooldown(3, '编号不符。');
   };
   $('#v3-go').addEventListener('click', go);
   $('#v3').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
@@ -252,6 +255,51 @@ function showStep3() {
 
 // ------------------------------------------------------------
 // 「失败即剧情」：踢出后自动创建邮箱账号
+// ------------------------------------------------------------
+// 答错冷却：不再"错一次就踢出去"，而是冻结一小段时间（和邮箱登录同一套规矩）。
+// 踢出只留给"多次不合规发言"（风控），剧情那段还在。
+// ------------------------------------------------------------
+let cooldownTimer = null;
+function cooldownLeft() {
+  return Math.max(0, Math.ceil(((state.roomCooldownUntil || 0) - Date.now()) / 1000));
+}
+
+function paintCooldown(step, reason) {
+  const sec = cooldownLeft();
+  const inp = $(`#v${step}`), btn = $(`#v${step}-go`), msg = $(`#v${step}-msg`);
+  if (sec <= 0) {
+    if (inp) inp.disabled = false;
+    if (btn) { btn.disabled = false; btn.textContent = '提交'; }
+    if (msg) { msg.textContent = '冷却结束，可以重新提交。'; msg.className = 'verify-msg'; }
+    if (cooldownTimer) { clearTimeout(cooldownTimer); cooldownTimer = null; }
+    return;
+  }
+  if (inp) inp.disabled = true;
+  if (btn) { btn.disabled = true; btn.textContent = `冷却中 · ${sec}s`; }
+  if (msg) {
+    const fails = state.roomFails || 0;
+    msg.textContent = `${reason ? reason + '　' : ''}已错 ${fails} 次，${sec} 秒后可重试。`;
+    msg.className = 'verify-msg error';
+  }
+  if (cooldownTimer) clearTimeout(cooldownTimer);
+  cooldownTimer = setTimeout(() => paintCooldown(step, reason), 1000);
+}
+
+function startCooldown(step, reason) {
+  const until = Date.now() + 30000;
+  const fails = (state.roomFails || 0) + 1;
+  setMany({ roomCooldownUntil: until, roomFails: fails });
+  state.roomCooldownUntil = until;
+  state.roomFails = fails;
+  showToast('信号冷却', `复核未通过，${30} 秒后可重试。`, 'warning');
+  paintCooldown(step, reason);
+}
+
+// 进入某一步时，如果冷却还没结束，直接把按钮冻上
+function applyCooldown(step) {
+  if (cooldownLeft() > 0) paintCooldown(step, '上一次复核未通过。');
+}
+
 // ------------------------------------------------------------
 async function failVerify(reason) {
   if (kicked) return;
