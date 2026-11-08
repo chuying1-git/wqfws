@@ -4,10 +4,10 @@
 // ============================================================
 import { loadState, set, setMany } from '../state.js';
 import { route, navigate, initRouter } from '../router.js';
-import { $, showToast, initNav, gateScreen, esc } from './ui.js';
+import { $, showToast, renderStations, gateScreen, esc } from './ui.js';
 
 const state = loadState();
-initNav(state);
+renderStations($('#arg-nav'), state, 'terminal.html');
 
 const el = {
   display: $('#pipeline-display'),
@@ -150,12 +150,12 @@ function solve() {
       另外还需要 <b>Level A 权限</b>：回维基主页，连续点击站点标识 <b>7 次</b>。
     </div>
     <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
-      <a class="back-link" href="cipher.html">去解第 4 段 →</a>
-      <a class="back-link" href="index.html">回维基主页觉醒 →</a>
-      <a class="back-link" href="archive.html">尝试打开档案库 →</a>
+      <a class="btn ghost" href="cipher.html" style="text-decoration:none;">去解第 4 段 →</a>
+      <a class="btn ghost" href="index.html" style="text-decoration:none;">回维基主页觉醒 →</a>
+      <a class="btn ghost" href="archive.html" style="text-decoration:none;">尝试打开档案库 →</a>
     </div>`;
   showToast('管道贯通', '8 条命令全部正确。档案库权限已记录。', 'success');
-  initNav({ ...state, pipelineSolved: true });
+  renderStations($('#arg-nav'), { ...state, pipelineSolved: true }, 'terminal.html');
 }
 
 el.submit.addEventListener('click', submit);

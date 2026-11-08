@@ -1,155 +1,45 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>厨得快 - 官方内测直播预约</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
-  <style>
-    .live-page {
-      max-width: 700px;
-      margin: 0 auto;
-    }
-    .live-hero {
-      text-align: center;
-      padding: 40px 20px;
-    }
-    .live-logo {
-      height: 80px;
-      margin-bottom: 20px;
-      filter: drop-shadow(0 0 20px var(--accent));
-      animation: glow-pulse 3s infinite;
-    }
-    .live-title {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      background: linear-gradient(90deg, var(--fg), var(--accent));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .live-subtitle {
-      color: var(--fg-muted);
-      font-size: 16px;
-      margin-bottom: 24px;
-    }
-    .live-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      background: var(--accent-dim);
-      border: 1px solid var(--accent);
-      border-radius: 20px;
-      color: var(--accent);
-      font-family: var(--mono);
-      font-size: 12px;
-    }
-    .live-status.live { background: var(--danger-dim); border-color: var(--danger); color: var(--danger); }
-    .live-status .dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: currentColor;
-      animation: pulse 1s infinite;
-    }
-    .live-status.live .dot { animation: pulse 0.5s infinite; }
-    
-    .countdown-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px;
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    .countdown-label { font-size: 13px; color: var(--fg-muted); margin-bottom: 16px; }
-    .countdown-value {
-      font-family: var(--mono);
-      font-size: 48px;
-      font-weight: 600;
-      color: var(--accent);
-      letter-spacing: 4px;
-    }
-    .countdown-value.expired { color: var(--danger); }
-    
-    .reserve-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 32px;
-      text-align: center;
-    }
-    .reserve-btn {
-      font-size: 16px;
-      padding: 16px 48px;
-    }
-    .reserve-btn:disabled { opacity: 0.5; }
-    
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      margin-top: 24px;
-    }
-    .info-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 20px;
-    }
-    .info-card h4 { color: var(--accent); margin-bottom: 12px; font-size: 14px; }
-    .info-card p { font-size: 13px; color: var(--fg-muted); margin: 0; }
-    
-    .enter-room-btn {
-      width: 100%;
-      margin-top: 24px;
-      padding: 16px;
-      font-size: 16px;
-      display: none;
-    }
-    .enter-room-btn.visible { display: inline-flex; }
-    
-    .secret-hint {
-      margin-top: 32px;
-      padding: 16px;
-      background: var(--bg-elevated);
-      border: 1px dashed var(--accent-dim);
-      border-radius: 8px;
-      font-size: 12px;
-      color: var(--fg-dim);
-      font-family: var(--mono);
-      text-align: center;
-    }
-    .secret-hint code { color: var(--accent); }
-  </style>
-  <!-- 登记不是唯一的门。有的人不需要等。 -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#020604" />
+<meta name="robots" content="noindex" />
+<title>WQFWS://SECRET-ARCHIVE · 内测预约</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23020604'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='%236dff9e' font-family='monospace'%3E%3E_%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="css/original.css" />
+<link rel="stylesheet" href="css/arg.css" />
+<!-- 登记不是唯一的门。有的人不需要等。 -->
 </head>
-<body class="app">
-  <header class="site-header">
-    <div class="header-container">
-      <a href="index.html" class="logo-area">
-        <img src="assets/logo/厨得快1.png" alt="Logo" class="logo-img">
-        <span class="site-title">后室中文维基</span>
-      </a>
-      <div class="search-area" style="max-width:300px;">
-        <input type="text" class="search-input" placeholder="搜索..." disabled style="opacity:0.5;">
-      </div>
-      <nav class="category-nav">
-        <a href="index.html" class="nav-item">首页</a>
-        <a href="live.html" class="nav-item" style="color:var(--accent);border-color:var(--accent);">内测预约</a>
-        <a href="mail.html" class="nav-item" id="mail-nav-link" style="display:none;">内部邮箱</a>
-        <a href="terminal.html" class="nav-item" id="terminal-nav-link" style="display:none;">终端</a>
-        <a href="archive.html" class="nav-item" id="archive-nav-link" style="display:none;">机密档案</a>
-      </nav>
-    </div>
-  </header>
+<body>
+  <div class="screen">
+    <div class="scanlines"></div>
+    <div class="sweep"></div>
 
-  <main class="main-content">
+    <div class="content">
+      <div class="topline">
+        <span>WQFWS://SECRET-ARCHIVE <span class="badge">RESERVE</span></span>
+        <span class="status"><i></i><span>RESERVE · 未预约</span></span>
+      </div>
+
+      <p class="tagline">官方内测直播预约 · <b>名额有限</b></p>
+
+      <div class="meta">
+        <span>USER: guest</span>
+        <span>NODE: live</span>
+        <span>CLEARANCE: APPLICANT</span>
+      </div>
+
+      <div class="stations" id="arg-nav"></div>
+
+
+  <div class="stage-card" style="margin-top:18px;">
+        <div class="stage-hd"><span class="grow">预约通道 · 开播前 20 分钟</span><span class="prog" id="pg-prog">STANDBY</span></div>
+        <div class="stage-bd">
     <div class="live-page">
       <div class="live-hero">
-        <img src="assets/logo/厨得快1.png" alt="厨得快" class="live-logo" id="live-logo">
-        <h1 class="live-title">厨得快官方内测直播</h1>
+        <div class="live-logo" id="live-logo" aria-hidden="true" style="font-family:var(--mono);font-size:46px;line-height:80px;color:var(--g);text-shadow:0 0 22px rgba(109,255,158,0.5);">&gt;_</div>
+        <h1 class="live-title">官方内测直播</h1>
         <p class="live-subtitle">新世界服务平台 · 居民登记专项行动</p>
         <div class="live-status" id="live-status">
           <span class="dot"></span>
@@ -198,15 +88,18 @@
         该口令仅在直播开始后有效，请妥善保管。
       </div>
     </div>
-  </main>
+  </div>
+      </div>
 
-  <footer class="simple-site-footer">
-    厨得快 · 官方内测直播预约页 · <span class="mono">wqfws-arg-state-v1</span>
-  </footer>
+        <div class="foot">官方内测直播预约 · <span class="code">wqfws-arg-state-v1</span></div>
+    </div>
+  </div>
+
 
   <script type="module">
     import { loadState, set, get, setMany, has, getTimeSinceFirstVisit, getScheduledLiveTime, generateEmailCredentials } from './state.js';
     import { route, navigate, initRouter } from './router.js';
+    import { renderStations } from './js/ui.js';
     
     const state = loadState();
     const countdownValue = document.getElementById('countdown-value');
@@ -225,6 +118,7 @@
     const TOTAL_WAIT = 1200000; // 20 minutes
     
     function updateNav() {
+      renderStations(document.getElementById('arg-nav'), state, 'live.html');
       mailNavLink.style.display = state.mailCreated ? 'inline-block' : 'none';
       terminalNavLink.style.display = state.pipelineUnlocked ? 'inline-block' : 'none';
       archiveNavLink.style.display = state.awakened ? 'inline-block' : 'none';

@@ -13,7 +13,7 @@ export function showToast(title, body, type = 'info') {
   toast.innerHTML = `<div class="toast-title">${title}</div><div class="toast-body">${body}</div>`;
   document.body.appendChild(toast);
   setTimeout(() => {
-    toast.style.animation = 'fade-in 0.3s ease reverse';
+    toast.style.animation = 'argToastIn 0.3s ease reverse';
     setTimeout(() => toast.remove(), 300);
   }, 4200);
 }
@@ -113,7 +113,7 @@ export function renderStations(container, state, current) {
     const done = !locked && !here;
     const cls = ['station', locked ? 'locked' : '', here ? 'active' : '', done ? 'done' : ''].filter(Boolean).join(' ');
     const st = locked ? '未开放' : here ? '当前' : '可进入';
-    return `<button class="${cls}" data-href="${p.href}" type="button"${locked ? ' disabled' : ''}>
+    return `<button class="${cls}" id="${p.href.replace('.html', '')}-nav-link" data-href="${p.href}" type="button"${locked ? ' disabled' : ''}>
       <div class="st-ico">${p.ico}</div>
       <div class="st-name">${p.name}</div>
       <div class="st-desc">${p.desc}</div>

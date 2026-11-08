@@ -1,43 +1,48 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>厨得快 - 最高机密档案库</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="css/deep.css">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
-  <!-- frag 5/5 · "er" -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#020604" />
+<meta name="robots" content="noindex" />
+<title>WQFWS://SECRET-ARCHIVE · 最高机密档案库</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23020604'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='%236dff9e' font-family='monospace'%3E%3E_%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="css/original.css" />
+<link rel="stylesheet" href="css/arg.css" />
+<!-- frag 5/5 · "er" -->
 </head>
-<body class="app">
-  <header class="site-header">
-    <div class="header-container">
-      <a href="index.html" class="logo-area">
-        <img src="assets/logo/厨得快1.png" alt="Logo" class="logo-img">
-        <span class="site-title">后室中文维基</span>
-      </a>
-      <div class="search-area" style="max-width:300px;">
-        <input type="text" class="search-input" placeholder="搜索..." disabled style="opacity:0.5;">
+<body>
+  <div class="screen">
+    <div class="scanlines"></div>
+    <div class="sweep"></div>
+
+    <div class="content">
+      <div class="topline">
+        <span>WQFWS://SECRET-ARCHIVE <span class="badge" id="ar-badge">CLASSIFIED</span></span>
+        <span class="status"><i></i><span id="ar-status">ARCHIVE · 待检</span></span>
       </div>
-      <nav class="category-nav">
-        <a href="index.html" class="nav-item">首页</a>
-        <a href="live.html" class="nav-item">内测预约</a>
-        <a href="room.html" class="nav-item">直播间</a>
-        <a href="mail.html" class="nav-item">内部邮箱</a>
-        <a href="terminal.html" class="nav-item">终端</a>
-        <a href="cipher.html" class="nav-item">密钥本</a>
-        <a href="archive.html" class="nav-item">机密档案</a>
-      </nav>
+
+      <p class="tagline">最高机密档案库 · <b>仅限已觉醒者</b></p>
+
+      <div class="meta">
+        <span>USER: guest</span>
+        <span>NODE: archive</span>
+        <span>CLEARANCE: AWAKENED</span>
+      </div>
+
+      <div class="stations" id="arg-nav"></div>
+
+      <div class="stage-card" style="margin-top:18px;">
+        <div class="stage-hd">
+          <span class="grow">档案索引</span>
+          <span class="prog" id="ar-prog">0 / 9</span>
+        </div>
+        <div class="stage-bd" id="archive-root"></div>
+      </div>
+
+      <div class="foot">最高机密档案库 · <span class="code">wqfws-arg-state-v1</span></div>
     </div>
-  </header>
-
-  <main class="main-content">
-    <div id="archive-root" class="archive-main"></div>
-  </main>
-
-  <footer class="simple-site-footer">
-    厨得快 · 最高机密档案库 · <span class="mono">wqfws-arg-state-v1</span>
-  </footer>
+  </div>
 
   <script type="module" src="js/archive.js"></script>
   <script src="js/trace.js" data-page="机密档案" data-trace="真结局不是终点，第五段在别的媒体里。" data-frag="5/5 = er"></script>

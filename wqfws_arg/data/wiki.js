@@ -142,7 +142,7 @@ export const WIKI_ENTRIES = [
         <li>砂锅焗鸡 → 频率锁定: 0.5s</li>
         <li>清蒸鲈鱼 → 信标: ALMOND</li>
       </ul>
-      <p style="color: #f4b057; font-family: monospace;">ODc1</p>
+      <p style="color: #6dff9e; font-family: monospace;">ODc1</p>
       <p class="hint">（提示：搜索框输入准确 Chef ID 可解锁该人员全部隐藏菜谱）</p>
     `
   },

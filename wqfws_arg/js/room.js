@@ -79,9 +79,9 @@ function renderWaitingRoom() {
 // ------------------------------------------------------------
 const PHASES = [
   { id: 1, name: '正常帧',     color: '#58a6ff', dur: 12000 },
-  { id: 2, name: '音频 / 全黑', color: '#4ade80', dur: 9000  },
-  { id: 3, name: '标识异常',   color: '#e84d4d', dur: 9000  },
-  { id: 4, name: '最终循环',   color: '#f4b057', dur: 0     },
+  { id: 2, name: '音频 / 全黑', color: '#6dff9e', dur: 9000  },
+  { id: 3, name: '标识异常',   color: '#ff7b7b', dur: 9000  },
+  { id: 4, name: '最终循环',   color: '#d8ffe6', dur: 0     },
 ];
 
 let phase = 0;

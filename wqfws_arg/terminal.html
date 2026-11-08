@@ -1,244 +1,82 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>厨得快 - 终端管道挑战</title>
-  <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
-  <style>
-    .terminal-main {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    
-    .terminal-header {
-      text-align: center;
-      padding: 40px 20px;
-    }
-    
-    .terminal-logo {
-      height: 80px;
-      margin-bottom: 20px;
-      filter: drop-shadow(0 0 20px var(--accent));
-    }
-    
-    .terminal-title {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      color: var(--fg);
-    }
-    
-    .terminal-subtitle {
-      color: var(--fg-muted);
-      font-size: 14px;
-    }
-    
-    /* Pipeline display */
-    .pipeline-display {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 20px;
-      margin: 24px 0;
-      overflow-x: auto;
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--fg);
-      line-height: 1.8;
-    }
-    
-    .pipeline-display .command {
-      display: inline-block;
-      margin-right: 12px;
-      padding: 6px 12px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      min-width: 140px;
-    }
-    
-    .pipeline-display .command.real { border-left: 3px solid var(--success); }
-    .pipeline-display .command.trap { border-left: 3px solid var(--danger); }
-    
-    .pipeline-display .command .name { font-weight: 600; color: var(--accent); }
-    .pipeline-display .command .desc { font-size: 11px; color: var(--fg-muted); margin-top: 2px; display: block; }
-    
-    .pipeline-display .separator { color: var(--fg-dim); margin: 0 4px; }
-    
-    .pipeline-display .error { color: var(--danger); font-weight: 600; }
-    .pipeline-display .success { color: var(--success); font-weight: 600; }
-    
-    /* Command input */
-    .command-input {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 20px;
-      margin: 24px 0;
-    }
-    
-    .command-input label {
-      display: block;
-      font-size: 12px;
-      color: var(--fg-muted);
-      margin-bottom: 8px;
-    }
-    
-    .command-input .input-field {
-      width: 100%;
-      padding: 12px;
-      font-family: var(--mono);
-      font-size: 14px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--fg);
-      margin-bottom: 12px;
-      resize: vertical;
-    }
-    
-    .command-input .input-field:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: var(--glow);
-    }
-    
-    .submit-btn {
-      width: 100%;
-      padding: 12px;
-      font-size: 14px;
-      background: var(--accent);
-      color: var(--bg);
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-family: var(--mono);
-    }
-    
-    .submit-btn:disabled { background: var(--fg-dim); cursor: not-allowed; }
-    
-    /* Hints */
-    .hint-box {
-      background: var(--accent-dim);
-      border: 1px solid var(--accent);
-      border-radius: 8px;
-      padding: 16px;
-      margin: 20px 0;
-    }
-    
-    .hint-box code { color: var(--accent); }
-    
-    .trap-warning {
-      background: var(--danger-dim);
-      border: 1px solid var(--danger);
-      border-radius: 8px;
-      padding: 16px;
-      margin: 20px 0;
-    }
-    
-    .trap-warning code { color: var(--danger); }
-    
-    .success-banner {
-      background: linear-gradient(90deg, var(--success), var(--success-dim));
-      color: var(--bg);
-      padding: 20px;
-      border-radius: 8px;
-      margin: 24px 0;
-      display: none;
-    }
-    
-    .success-banner.visible { display: block; }
-  </style>
-  <link rel="stylesheet" href="css/deep.css">
-  <!-- frag 3/5 · "ke" -->
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#020604" />
+<meta name="robots" content="noindex" />
+<title>WQFWS://SECRET-ARCHIVE · 终端管道</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='18' fill='%23020604'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='%236dff9e' font-family='monospace'%3E%3E_%3C/text%3E%3C/svg%3E" />
+<link rel="stylesheet" href="css/original.css" />
+<link rel="stylesheet" href="css/arg.css" />
+<!-- frag 3/5 · "ke" -->
 </head>
-<body class="app">
-  <header class="site-header">
-    <div class="header-container">
-      <a href="index.html" class="logo-area">
-        <img src="assets/logo/厨得快1.png" alt="Logo" class="logo-img">
-        <span class="site-title">后室中文维基</span>
-      </a>
-      <div class="search-area" style="max-width:300px;">
-        <input type="text" class="search-input" placeholder="搜索..." disabled style="opacity:0.5;">
-      </div>
-      <nav class="category-nav">
-        <a href="index.html" class="nav-item">首页</a>
-        <a href="live.html" class="nav-item" style="color:var(--accent);">内测预约</a>
-        <a href="room.html" class="nav-item" style="color:var(--accent);">直播间</a>
-        <a href="mail.html" class="nav-item" style="color:var(--accent);">内部邮箱</a>
-        <a href="terminal.html" class="nav-item" style="color:var(--accent);">终端</a>
-        <a href="cipher.html" class="nav-item">密钥本</a>
-        <a href="archive.html" class="nav-item" style="color:var(--accent);">机密档案</a>
-      </nav>
-    </div>
-  </header>
+<body>
+  <div class="screen">
+    <div class="scanlines"></div>
+    <div class="sweep"></div>
 
-  <main class="main-content">
-    <div class="terminal-main">
-      <div class="terminal-header">
-        <img src="assets/logo/厨得快1.png" alt="厨得快" class="terminal-logo">
-        <h1 class="terminal-title">终端管道挑战</h1>
-        <p class="terminal-subtitle">输入 8 条命令的管道 — 其中 2 条是陷阱</p>
+    <div class="content">
+      <div class="topline">
+        <span>WQFWS://SECRET-ARCHIVE <span class="badge" id="tm-badge">PIPELINE</span></span>
+        <span class="status"><i></i><span id="tm-status">PIPE · 8 SLOTS</span></span>
       </div>
-      
-      <div class="hint-box">
-        <strong>💡 提示：</strong> <code>PIPE_ANSWER</code> = ["cat", "grep", "cut", "tr", "base64", "tail"]<br>
-        共 8 条命令：6 条真实指令 + 2 条陷阱指令<br>
-        <code>错误输出 →</code> 设置 <code>S.ttrap=1</code> → <code>grep</code> 实际模式被 <code>.redacted</code> 替换<br>
-        <strong>必须从 trace 中推断陷阱命令</strong>
+
+      <p class="tagline">终端管道 · 八条命令 · <b>每条只有一次机会</b></p>
+
+      <div class="meta">
+        <span>USER: guest</span>
+        <span>NODE: terminal</span>
+        <span>CLEARANCE: OPERATOR</span>
       </div>
-      
-      <!-- Pipeline display -->
-      <div id="pipeline-display" class="pipeline-display" style="display:none;">
-        <div>管道: <span class="command real"><span class="name">cat</span> <span class="desc">从 STDIN 读取</span></span> | 
-            <span class="separator">|</span> 
-            <span class="command real"><span class="name">grep</span> <span class="desc">过滤关键词</span></span> | 
-            <span class="separator">|</span> 
-            <span class="command real"><span class="name">cut</span> <span class="desc">切分字段</span></span> | 
-            <span class="separator">|</span> 
-            <span class="command real"><span class="name">tr</span> <span class="desc">字符转换</span></span> | 
-            <span class="separator">|</span> 
-            <span class="command real"><span class="name">base64</span> <span class="desc">编码/解码</span></span> | 
-            <span class="separator">|</span> 
-            <span class="command real"><span class="name">tail</span> <span class="desc">取最后 N 行</span></span></div>
-        
-        <div id="trap-commands" style="margin-top:12px;">
-          <span class="command trap" style="display:none;"><span class="name">sort</span> <span class="desc">伪陷阱：排序输出</span></span>
-          <span class="command trap" style="display:none;"><span class="name">head</span> <span class="desc">真陷阱：截断输出</span></span>
+
+      <div class="stations" id="arg-nav"></div>
+
+      <div class="stage-card" style="margin-top:18px;">
+        <div class="stage-hd">
+          <span class="grow">管道执行台</span>
+          <span class="prog" id="tm-prog">0 / 8</span>
+        </div>
+        <div class="stage-bd">
+          <div class="terminal-main">
+
+            <!-- 管道槽位（由 js/terminal.js 渲染） -->
+            <div class="pipeline-display" id="pipeline-display"></div>
+
+            <!-- 命令输入 -->
+            <div class="command-input" id="command-form">
+              <label for="command-input">输入管道命令序列（空格分隔）：</label>
+              <textarea class="input-field" id="command-input" rows="3"
+                        placeholder="例如: cat grep cut tr base64 tail sort head"></textarea>
+              <button class="submit-btn" id="submit-command" disabled>提交验证</button>
+              <div id="command-status" style="margin-top:12px;font-size:12px;"></div>
+            </div>
+
+            <!-- 错误 trace -->
+            <div class="error-state" id="error-state"></div>
+
+            <!-- 成功横幅 -->
+            <div class="success-banner" id="success-banner">
+              <strong>管道成功。</strong><br>
+              所有命令正确执行。权限：访问机密档案库 <a href="archive.html">→</a>
+            </div>
+
+            <!-- 提示 -->
+            <div class="hint-box">
+              卡住了可以要提示，但每次使用都会被记录（<span class="code">hintsUsed</span>）。
+              <div style="margin-top:10px;">
+                <button class="btn ghost" id="hint-btn" type="button">要一条提示</button>
+              </div>
+              <div class="hint-bar" id="hint-out"></div>
+            </div>
+
+          </div>
         </div>
       </div>
-      
-      <!-- Error state -->
-      <div id="error-state" class="trap-warning" style="display:none;">
-        <strong>⚠️ 陷阱触发</strong><br>
-        <code>grep</code> 实际模式变为：<span class="redacted">.redacted</span><br>
-        <code>S.ttrap</code> = 1（已记录错误）<br>
-        <small>从剩余 trace 中推断被屏蔽的模式</small>
-      </div>
-      
-      <!-- Command input form -->
-      <div class="command-input" id="command-form">
-        <label>输入管道命令序列（空格分隔）：</label>
-        <textarea class="input-field" id="command-input" rows="3" 
-                  placeholder="例如: cat grep cut tr base64 tail sort head"></textarea>
-        <button class="submit-btn" id="submit-command" disabled>提交验证</button>
-        <div id="command-status" style="margin-top:12px;font-size:12px;"></div>
-      </div>
-      
-      <!-- Success banner -->
-      <div class="success-banner" id="success-banner">
-        <strong>🎉 管道成功！</strong><br>
-        所有命令正确执行。权限：访问机密档案库 <a href="archive.html">→</a>
-      </div>
-    </div>
-  </main>
 
-  <footer class="simple-site-footer">
-    厨得快 · 终端管道挑战 · <span class="mono">wqfws-arg-state-v1</span>
-  </footer>
+      <div class="foot">终端管道挑战 · <span class="code">wqfws-arg-state-v1</span></div>
+    </div>
+  </div>
 
   <script type="module" src="js/terminal.js"></script>
   <script src="js/trace.js" data-page="终端管道" data-trace="八条命令里有两条是陷阱，删掉它们才能通。" data-frag="3/5 = ke"></script>

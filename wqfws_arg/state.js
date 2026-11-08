@@ -76,11 +76,15 @@ const DEFAULT_STATE = {
   vigenere4th: false,             // decoded the 4th final field (HANYU)
   badEndings: 0,                  // how many times the bad ending fired
 
-  // ---- smiler.png stego annex (deepest secret) ----
+  // ---- annex 03 stego chain (deepest secret) ----
+  //   L1 文件尾指针 → L2 PNG tEXt → L4 音频频谱（给出偏移 875）
+  //   → L3 蓝色通道 LSB（前半段）→ L5 两帧图差分（后半段）
   smilerL1: false,                // decoded the trailer pointer
   smilerL2: false,                // read the PNG tEXt metadata
+  smilerL4: false,                // read 875 out of the audio spectrogram
   smilerL3: false,                // pulled the payload out of the blue-channel LSBs
-  smilerSolved: false,            // all three layers recovered
+  smilerL5: false,                // recovered the second half from the frame diff
+  smilerSolved: false,            // all five layers recovered
   smilerSecret: '',               // what was hidden in the pixels
 
   // ---- hidden page / folklore layer ----
