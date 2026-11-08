@@ -129,3 +129,20 @@ export function renderStations(container, state, current) {
     if (href !== current) location.href = href;
   };
 }
+
+// ---------- 跨标签页刷新导航栏 ----------
+// 另一个标签页改了进度（预约直播、解锁档案…），本页的导航栏要当场跟着变，
+// 不然玩家会以为"没解锁"（这正是之前踩过的坑）。
+// 注意：没装导航的页面（比如工具台）直接 return —— 工具台承诺不读进度、不记录。
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('storage', (e) => {
+    if (e.key !== 'wqfws-arg-state-v1') return;
+    const nav = document.querySelector('#arg-nav');
+    if (!nav) return;
+    import('../state.js').then((m) => {
+      const page = location.pathname.split('/').pop() || 'index.html';
+      document.querySelectorAll('#arg-nav').forEach((el) => renderStations(el, m.getFullState(), page));
+      showToast('进度已同步', '另一个标签页更新了进度，导航栏已刷新。', 'info');
+    }).catch(() => {});
+  });
+}

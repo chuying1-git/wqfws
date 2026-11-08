@@ -96,6 +96,12 @@ const DEFAULT_STATE = {
 // In-memory state cache
 let _stateCache = null;
 let _dirty = false;
+// 本页真正改过的键。saveState() 只把这些键盖回盘上，其余键以盘上最新值为准 ——
+// 否则任何一个"打开得比较早"的标签页，都会在它下次写入时把整块旧快照盖回去，
+// 抹掉别的标签页里的进度（真实丢档就是这么发生的：一个标签页预约了直播，
+// 另一个早开的标签页在 wiki 检索框打几个字 → wikiSearchCount 落盘 → liveReserved 被盖掉）。
+const _touchedKeys = new Set();
+function _markTouched(key) { _touchedKeys.add(key); _dirty = true; }
 
 // Load state from localStorage, merge with defaults (backward compat)
 export function loadState() {
@@ -111,6 +117,7 @@ export function loadState() {
       _stateCache = { ...DEFAULT_STATE };
       // Set first visit time on brand new state
       _stateCache.firstVisitTime = Date.now();
+      _markTouched('firstVisitTime');
       saveState();
     }
   } catch (e) {
@@ -121,7 +128,7 @@ export function loadState() {
   
   // Always update last visit time
   _stateCache.lastVisitTime = Date.now();
-  _dirty = true;
+  _markTouched('lastVisitTime');
   saveState();
   
   return _stateCache;
@@ -131,6 +138,19 @@ export function loadState() {
 export function saveState() {
   if (!_dirty || !_stateCache) return;
   try {
+    // 落盘前先看盘上现在是什么：别的标签页可能刚写过东西。
+    // 只把本页改过的键盖上去，其余键保留盘上的值 —— 这样多标签页不会互相抹档。
+    let disk = null;
+    try {
+      const raw = localStorage.getItem(STATE_KEY);
+      disk = raw ? JSON.parse(raw) : null;
+    } catch (e) { disk = null; }
+
+    if (disk && typeof disk === 'object') {
+      for (const [k, v] of Object.entries(disk)) {
+        if (!_touchedKeys.has(k) && _stateCache[k] !== v) _stateCache[k] = v;
+      }
+    }
     localStorage.setItem(STATE_KEY, JSON.stringify(_stateCache));
     _dirty = false;
   } catch (e) {
@@ -155,7 +175,7 @@ export function set(key, value) {
   loadState();
   if (_stateCache[key] !== value) {
     _stateCache[key] = value;
-    _dirty = true;
+    _markTouched(key);
     saveState();
   }
 }
@@ -167,6 +187,7 @@ export function setMany(obj) {
   for (const [k, v] of Object.entries(obj)) {
     if (_stateCache[k] !== v) {
       _stateCache[k] = v;
+      _markTouched(k);
       changed = true;
     }
   }
@@ -186,7 +207,10 @@ export function has(key) {
 export function resetState() {
   _stateCache = { ...DEFAULT_STATE };
   _stateCache.firstVisitTime = Date.now();
+  _touchedKeys.clear();
   _dirty = true;
+  // 重置是"我要抹掉一切"，所以先清盘再落盘 —— 否则合并逻辑会把它当成一次普通写入。
+  try { localStorage.removeItem(STATE_KEY); } catch (e) {}
   saveState();
   return _stateCache;
 }
@@ -234,6 +258,29 @@ export function generateEmailCredentials() {
 export function getFullState() {
   loadState();
   return { ..._stateCache };
+}
+
+// ---------- 跨标签页同步 ----------
+// 别的标签页写了新进度（比如在另一个标签页预约了直播），本页当场吸收，
+// 不必刷新页面就能看到导航栏解锁。也处理"清档"（key 被删）这条路径。
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('storage', (e) => {
+    if (e.key !== STATE_KEY || !_stateCache) return;
+    try {
+      if (e.newValue === null) {
+        // 另一个标签页清了档 —— 本页也回到默认，别把旧进度又写回去
+        _stateCache = { ...DEFAULT_STATE };
+        _stateCache.firstVisitTime = Date.now();
+        _touchedKeys.clear();
+        _dirty = false;
+        return;
+      }
+      const incoming = JSON.parse(e.newValue) || {};
+      for (const [k, v] of Object.entries(incoming)) {
+        if (!_touchedKeys.has(k) && _stateCache[k] !== v) _stateCache[k] = v;
+      }
+    } catch (err) { /* 忽略坏数据 */ }
+  });
 }
 
 // Initialize on import
