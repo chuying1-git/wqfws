@@ -384,7 +384,7 @@ if (gate === 'no-reserve') {
   gateScreen(el.container, {
     title: '直播间未授权访问',
     lines: ['你还没有预约本场内测直播。', '直播链接只发放给已登记的观众。'],
-    hint: '前往 <a href="live.html">内测预约</a> 完成登记。',
+    hint: '前往 <a href="live.html">内测预约</a> 完成登记（已开播也可以补登记，登记后马上就能进）。',
   });
 } else if (gate === 'not-started') {
   renderWaitingRoom();

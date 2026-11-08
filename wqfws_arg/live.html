@@ -137,11 +137,21 @@
         countdownFill.style.width = '100%';
         liveStatus.classList.add('live');
         statusText.textContent = 'LIVE';
-        reserveBtn.disabled = true;
-        reserveBtn.textContent = '直播进行中';
-        reserveStatus.textContent = '直播已开始，点击下方按钮进入';
-        enterRoomBtn.classList.add('visible');
         secretHint.style.display = 'block';
+        if (state.liveReserved) {
+          reserveBtn.disabled = true;
+          reserveBtn.textContent = '直播进行中';
+          reserveStatus.textContent = '直播已开始，点击下方按钮进入';
+          enterRoomBtn.classList.add('visible');
+        } else {
+          // 开播了但还没登记 —— 别把预约按钮锁死，否则就是死路：
+          // 预约点不动，点「进入直播间」又会被房间页门禁（只认 liveReserved）弹回来。
+          // 这里保留"补登记"，登记完立刻能进。
+          reserveBtn.disabled = false;
+          reserveBtn.textContent = '立即登记 · 已开播';
+          reserveStatus.textContent = '直播已开始。登记后马上就能进入信号。';
+          enterRoomBtn.classList.remove('visible');
+        }
         if (countdownInterval) clearInterval(countdownInterval);
       } else {
         countdownValue.textContent = formatTime(remaining);
@@ -170,16 +180,27 @@
     } else {
       reserveBtn.disabled = false;
       reserveBtn.addEventListener('click', () => {
+        const late = Date.now() >= getScheduledLiveTime();
         setMany({
           liveReserved: true,
           liveReserveTime: Date.now(),
           livePopupShown: true // Skip notification since we're on the page
         });
+        // 内存里那份 state 是页面加载时的快照，必须一起改 ——
+        // 否则下一秒 updateCountdown() 又会按"没预约"把按钮重画回去。
+        state.liveReserved = true;
+        state.liveReserveTime = Date.now();
         reserveBtn.disabled = true;
-        reserveBtn.textContent = '已预约';
-        reserveStatus.textContent = `预约成功 · 将在 ${new Date(Date.now() + TOTAL_WAIT).toLocaleTimeString()} 开始`;
+        reserveBtn.textContent = late ? '直播进行中' : '已预约';
+        reserveStatus.textContent = late
+          ? '登记完成 · 直播已开始，直接进入即可'
+          : `预约成功 · 将在 ${new Date(Date.now() + TOTAL_WAIT).toLocaleTimeString()} 开始`;
         enterRoomBtn.classList.add('visible');
-        showToast('预约成功', '20 分钟后直播开始，届时可直接进入直播间', 'success');
+        showToast(
+          late ? '登记完成' : '预约成功',
+          late ? '直播已开始，点击「进入直播间」即可' : '20 分钟后直播开始，届时可直接进入直播间',
+          'success'
+        );
         updateCountdown();
       });
     }
